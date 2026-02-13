@@ -40,7 +40,7 @@ jobs:
       - name: Adicionar ~/.local/bin ao PATH
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Criar diretórios do SDK
+      - nname: Criar diretórios do SDK
         run: |
           mkdir -p ~/.buildozer/android/platform/android-sdk
 
@@ -49,8 +49,10 @@ jobs:
           cd ~/.buildozer/android/platform/android-sdk
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-9477386_latest.zip
-          mkdir -p cmdline-tools
-          mv cmdline-tools cmdline-tools/latest
+          # Criar estrutura correta
+          mkdir -p cmdline-tools/latest
+          # Mover os arquivos extraídos para latest
+          mv cmdline-tools/* cmdline-tools/latest/ 2>/dev/null || true
           rm commandlinetools-linux-9477386_latest.zip
 
       - name: Aceitar licenças manualmente
