@@ -47,6 +47,7 @@ jobs:
             cmake \
             unzip \
             zip
+            
       - name: Instalar Cython e Buildozer
         run: |
           pip3 install --user --upgrade pip
