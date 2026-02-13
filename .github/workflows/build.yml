@@ -1,0 +1,78 @@
+name: Build CryptoGuard APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build for Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            python3-pip \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            ccache
+
+      - name: Instalar Cython e Buildozer
+        run: |
+          pip3 install --user --upgrade pip
+          pip3 install --user --upgrade cython==0.29.33 buildozer
+
+      - name: Adicionar ~/.local/bin ao PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Criar .buildozer com permissões
+        run: |
+          mkdir -p .buildozer
+          chmod 755 .buildozer
+
+      - name: Compilar APK com Buildozer
+        run: |
+          buildozer -v android debug 2>&1 | tee buildozer.log
+
+      - name: Verificar se APK foi gerado
+        id: check_apk
+        run: |
+          APK_FILE=$(ls bin/*.apk 2>/dev/null | head -n 1)
+          if [ -n "$APK_FILE" ]; then
+            echo "✅ APK encontrado: $APK_FILE"
+            echo "filename=$APK_FILE" >> $GITHUB_OUTPUT
+          else
+            echo "❌ APK não encontrado!"
+            echo "Últimas 50 linhas do log:"
+            tail -n 50 buildozer.log
+            exit 1
+          fi
+
+      - name: Upload do APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptoGuard-APK
+          path: ${{ steps.check_apk.outputs.filename }}
+          if-no-files-found: error
+
+      - name: Upload do log em caso de erro
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-log
+          path: buildozer.log
