@@ -40,7 +40,7 @@ jobs:
       - name: Adicionar ~/.local/bin ao PATH
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - nname: Criar diretórios do SDK
+      - name: Criar diretórios do SDK
         run: |
           mkdir -p ~/.buildozer/android/platform/android-sdk
 
