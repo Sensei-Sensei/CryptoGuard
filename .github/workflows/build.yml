@@ -65,7 +65,15 @@ jobs:
           mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools
           ln -sf $HOME/android-sdk/cmdline-tools/latest/bin $HOME/.buildozer/android/platform/android-sdk/tools/bin
 
-      - name: Criar buildozer.spec com log máximo
+      - name: Clonar python-for-android manualmente
+        run: |
+          mkdir -p $HOME/.buildozer/android/platform
+          cd $HOME/.buildozer/android/platform
+          git clone https://github.com/kivy/python-for-android.git
+          cd python-for-android
+          pip3 install --user -e .
+
+      - name: Criar buildozer.spec
         run: |
           cat > buildozer.spec << 'EOF'
           [app]
@@ -100,15 +108,13 @@ jobs:
           android.log_level = 2
           EOF
 
-      - name: Compilar APK com log completo
+      - name: Compilar APK
         run: |
           export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools
-          # Forçar rebuild completo
+          # Limpar apenas o necessário
           rm -rf .buildozer
-          rm -rf ~/.local/share/python-for-android
           
-          # Executar build com saída completa
-          buildozer android clean
+          # Executar build
           buildozer -v android debug 2>&1 | tee buildozer_complete.log
 
       - name: Verificar APK
