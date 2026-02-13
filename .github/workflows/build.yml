@@ -58,14 +58,14 @@ jobs:
           yes | ./sdkmanager --licenses || true
           ./sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
-      - name: Criar link simbólico para enganar o Buildozer
+      - name: Criar estrutura para Buildozer
         run: |
-          mkdir -p $HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $HOME/.buildozer/android/platform
           ln -sf $HOME/android-sdk $HOME/.buildozer/android/platform/android-sdk
           mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools
           ln -sf $HOME/android-sdk/cmdline-tools/latest/bin $HOME/.buildozer/android/platform/android-sdk/tools/bin
 
-      - name: Criar buildozer.spec
+      - name: Criar buildozer.spec com log máximo
         run: |
           cat > buildozer.spec << 'EOF'
           [app]
@@ -96,17 +96,20 @@ jobs:
           android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r25b
           android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
           android.ant_path = /home/runner/.buildozer/android/platform/apache-ant-1.9.4
+          p4a.log_level = 2
+          android.log_level = 2
           EOF
 
-      - name: Criar .buildozer bootstrap
-        run: |
-          mkdir -p .buildozer/android/platform
-          touch .buildozer/android/platform/.ready
-
-      - name: Compilar APK
+      - name: Compilar APK com log completo
         run: |
           export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools
-          buildozer -v android debug 2>&1 | tee buildozer.log
+          # Forçar rebuild completo
+          rm -rf .buildozer
+          rm -rf ~/.local/share/python-for-android
+          
+          # Executar build com saída completa
+          buildozer android clean
+          buildozer -v android debug 2>&1 | tee buildozer_complete.log
 
       - name: Verificar APK
         id: check_apk
@@ -117,8 +120,8 @@ jobs:
             echo "filename=$APK_FILE" >> $GITHUB_OUTPUT
           else
             echo "❌ APK não encontrado!"
-            echo "Últimas 100 linhas do log:"
-            tail -n 100 buildozer.log
+            echo "Últimas 200 linhas do log:"
+            tail -n 200 buildozer_complete.log
             exit 1
           fi
 
@@ -129,9 +132,9 @@ jobs:
           path: ${{ steps.check_apk.outputs.filename }}
           if-no-files-found: error
 
-      - name: Upload do log em caso de erro
-        if: failure()
+      - name: Upload do log completo
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: buildozer-log
-          path: buildozer.log
+          name: buildozer-complete-log
+          path: buildozer_complete.log
