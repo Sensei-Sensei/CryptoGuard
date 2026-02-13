@@ -1,14 +1,12 @@
-name: Build CryptoGuard APK
-
+name: Build APK
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Permite rodar manualmente no botão "Run workflow"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout do código
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Java 17
@@ -17,61 +15,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - - name: Instalar dependências do sistema
+      - name: Instalar Dependências
         run: |
           sudo apt update
-          sudo apt install -y \
-            build-essential \
-            git \
-            python3-dev \
-            python3-pip \
-            ffmpeg \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            zlib1g-dev \
-            libgstreamer1.0-dev \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good \
-            libffi-dev \
-            libssl-dev \
-            autoconf \
-            automake \
-            libtool \
-            pkg-config \
-            cmake \
-            unzip \
-            zip
-            
-      - name: Instalar Cython e Buildozer
+          sudo apt install -y build-essential git python3-dev python3-pip ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good libffi-dev libssl-dev autoconf automake libtool pkg-config cmake unzip zip
+
+      - name: Instalar Buildozer e Cython
         run: |
           pip3 install --user --upgrade pip
-          # Forçando versões compatíveis para evitar o erro de 'sh' que vimos na log
-          pip3 install --user "cython<3.0" wheel "sh<2.0"
-          pip3 install --user buildozer
+          pip3 install --user "cython<3.0" "sh<2.0" buildozer
 
-      - name: Build com Buildozer
+      - name: Compilar APK
         run: |
-          # Adiciona o bin do pip ao PATH
           export PATH=$PATH:$HOME/.local/bin
-          
-          # Se o buildozer.spec não existir, ele cria um padrão. 
-          # Se já existir no seu repo, ele usará o seu.
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-          fi
-          
-          # O comando abaixo limpa builds anteriores e compila
-          # Usamos 'yes |' para aceitar todas as licenças da Google automaticamente
+          # O 'yes' aceita automaticamente as licenças do SDK Android
           yes | buildozer -v android debug
 
-      - name: Upload do APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CryptoGuard-APK
+          name: CryptoGuard-Package
           path: bin/*.apk
