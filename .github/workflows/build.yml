@@ -11,7 +11,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar dependências (incluindo Android SDK via apt)
+      - name: Instalar dependências do sistema
         run: |
           sudo apt update
           sudo apt install -y \
@@ -30,24 +30,7 @@ jobs:
             libffi-dev \
             libssl-dev \
             ccache \
-            wget \
-            android-sdk
-
-      - name: Configurar variáveis de ambiente do Android SDK
-        run: |
-          echo "ANDROID_HOME=/usr/lib/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=/usr/lib/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$PATH:/usr/lib/android-sdk/cmdline-tools/latest/bin:/usr/lib/android-sdk/platform-tools" >> $GITHUB_ENV
-
-      - name: Aceitar licenças (se necessário)
-        run: |
-          if [ -f /usr/lib/android-sdk/cmdline-tools/latest/bin/sdkmanager ]; then
-            yes | /usr/lib/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          elif [ -f /usr/lib/android-sdk/tools/bin/sdkmanager ]; then
-            yes | /usr/lib/android-sdk/tools/bin/sdkmanager --licenses || true
-          else
-            echo "⚠️ sdkmanager não encontrado, continuando..."
-          fi
+            wget
 
       - name: Instalar Cython e Buildozer
         run: |
@@ -56,6 +39,30 @@ jobs:
 
       - name: Adicionar ~/.local/bin ao PATH
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Criar diretórios do SDK
+        run: |
+          mkdir -p ~/.buildozer/android/platform/android-sdk
+
+      - name: Baixar Command Line Tools
+        run: |
+          cd ~/.buildozer/android/platform/android-sdk
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q commandlinetools-linux-9477386_latest.zip
+          mkdir -p cmdline-tools
+          mv cmdline-tools cmdline-tools/latest
+          rm commandlinetools-linux-9477386_latest.zip
+
+      - name: Aceitar licenças manualmente
+        run: |
+          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
+          yes | ./sdkmanager --licenses || true
+          ./sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+
+      - name: Configurar PATH
+        run: |
+          echo "$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/.buildozer/android/platform/android-sdk/platform-tools" >> $GITHUB_PATH
 
       - name: Criar buildozer.spec
         run: |
@@ -86,17 +93,12 @@ jobs:
           permissions = INTERNET
           android.accept_sdk_license = True
           android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r25b
-          android.sdk_path = /usr/lib/android-sdk
+          android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
           android.ant_path = /home/runner/.buildozer/android/platform/apache-ant-1.9.4
-          android.sdk_manager_tools_version = 9.0
           EOF
 
       - name: Compilar APK
         run: |
-          # Garantir que o Buildozer use o SDK correto
-          mkdir -p /home/runner/.buildozer/android/platform
-          ln -sf /usr/lib/android-sdk /home/runner/.buildozer/android/platform/android-sdk
-          
           buildozer -v android debug 2>&1 | tee buildozer.log
 
       - name: Verificar APK
