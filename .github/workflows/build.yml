@@ -11,7 +11,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar dependências (Ubuntu 24.04)
+      - name: Instalar dependências
         run: |
           sudo apt update
           sudo apt install -y \
@@ -29,7 +29,8 @@ jobs:
             cmake \
             libffi-dev \
             libssl-dev \
-            ccache
+            ccache \
+            wget
 
       - name: Instalar Cython e Buildozer
         run: |
@@ -44,8 +45,61 @@ jobs:
           mkdir -p .buildozer
           chmod 755 .buildozer
 
+      - name: Configurar SDK e aceitar licenças
+        run: |
+          # Criar diretório do SDK
+          mkdir -p ~/.buildozer/android/platform/android-sdk
+          
+          # Baixar command line tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q commandlinetools-linux-9477386_latest.zip -d ~/.buildozer/android/platform/android-sdk/
+          mv ~/.buildozer/android/platform/android-sdk/cmdline-tools ~/.buildozer/android/platform/android-sdk/latest
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools
+          mv ~/.buildozer/android/platform/android-sdk/latest ~/.buildozer/android/platform/android-sdk/cmdline-tools/
+          
+          # Adicionar ao PATH
+          export PATH=$PATH:~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
+          
+          # Aceitar todas as licenças automaticamente
+          yes | sdkmanager --licenses
+          
+          # Instalar build-tools específicas
+          sdkmanager "build-tools;33.0.0" "platform-tools" "platforms;android-33"
+
+      - name: Configurar Buildozer
+        run: |
+          # Configurar buildozer.spec para usar SDK correto
+          cat > buildozer.spec << 'EOF'
+          [app]
+          title = CryptoGuard
+          package.name = cryptoguard
+          package.domain = com.stazin
+          source.dir = .
+          source.include_exts = py,png,jpg,kv,atlas,txt
+          version = 1.0
+          requirements = python3,kivy
+          orientation = portrait
+          osx.python_version = 3
+          osx.kivy_version = 2.1.0
+          fullscreen = 0
+
+          [buildozer]
+          log_level = 2
+          warn_on_root = 1
+
+          [android]
+          api = 33
+          minapi = 21
+          ndk = 25b
+          sdk = 33
+          arch = arm64-v8a
+          permissions = INTERNET
+          android.accept_sdk_license = True
+          EOF
+
       - name: Compilar APK com Buildozer
         run: |
+          export PATH=$PATH:~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
           buildozer -v android debug 2>&1 | tee buildozer.log
 
       - name: Verificar se APK foi gerado
@@ -57,8 +111,8 @@ jobs:
             echo "filename=$APK_FILE" >> $GITHUB_OUTPUT
           else
             echo "❌ APK não encontrado!"
-            echo "Últimas 50 linhas do log:"
-            tail -n 50 buildozer.log
+            echo "Últimas 100 linhas do log:"
+            tail -n 100 buildozer.log
             exit 1
           fi
 
