@@ -11,7 +11,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar dependências do sistema
+      - name: Instalar dependências
         run: |
           sudo apt update
           sudo apt install -y \
@@ -40,31 +40,30 @@ jobs:
       - name: Adicionar ~/.local/bin ao PATH
         run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Criar diretórios do SDK
+      - name: Baixar SDK Command Line Tools
         run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk
-
-      - name: Baixar Command Line Tools
-        run: |
-          cd ~/.buildozer/android/platform/android-sdk
+          mkdir -p $HOME/android-sdk
+          cd $HOME/android-sdk
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-9477386_latest.zip
-          # Criar estrutura correta
           mkdir -p cmdline-tools/latest
-          # Mover os arquivos extraídos para latest
           mv cmdline-tools/* cmdline-tools/latest/ 2>/dev/null || true
           rm commandlinetools-linux-9477386_latest.zip
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Aceitar licenças manualmente
+      - name: Aceitar licenças
         run: |
-          cd ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
+          cd $HOME/android-sdk/cmdline-tools/latest/bin
           yes | ./sdkmanager --licenses || true
           ./sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
 
-      - name: Configurar PATH
+      - name: Criar link simbólico para enganar o Buildozer
         run: |
-          echo "$HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/.buildozer/android/platform/android-sdk/platform-tools" >> $GITHUB_PATH
+          mkdir -p $HOME/.buildozer/android/platform/android-sdk
+          ln -sf $HOME/android-sdk $HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools
+          ln -sf $HOME/android-sdk/cmdline-tools/latest/bin $HOME/.buildozer/android/platform/android-sdk/tools/bin
 
       - name: Criar buildozer.spec
         run: |
@@ -99,8 +98,14 @@ jobs:
           android.ant_path = /home/runner/.buildozer/android/platform/apache-ant-1.9.4
           EOF
 
+      - name: Criar .buildozer bootstrap
+        run: |
+          mkdir -p .buildozer/android/platform
+          touch .buildozer/android/platform/.ready
+
       - name: Compilar APK
         run: |
+          export PATH=$PATH:$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools
           buildozer -v android debug 2>&1 | tee buildozer.log
 
       - name: Verificar APK
