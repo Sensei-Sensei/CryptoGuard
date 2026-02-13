@@ -1,0 +1,26 @@
+name: Build CryptoGuard APK
+
+on:
+  # Permite executar manualmente pela aba Actions
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build for Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Build com Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          workdir: .
+          buildozer_version: stable
+
+      - name: Upload do APK (Artifact)
+        uses: actions/upload-artifact@v3
+        with:
+          name: CryptoGuard-APK
+          path: ${{ steps.buildozer.outputs.filename }}
