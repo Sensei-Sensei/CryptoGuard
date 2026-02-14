@@ -1,70 +1,63 @@
 [app]
-# (str) Title of your application
+# (str) Título do seu aplicativo
 title = CryptoGuard
 
-# (str) Package name
+# (str) Nome do pacote (sem espaços ou acentos)
 package.name = cryptoguard
 
-# (str) Package domain (needed for android packaging)
+# (str) Domínio do pacote
 package.domain = com.stazin
 
-# (str) Source code where the main.py live
+# (str) Diretório onde o main.py está localizado
 source.dir = .
 
-# (list) Source files to include (let empty to include all the files)
+# (list) Extensões de arquivos a serem incluídas
 source.include_exts = py,png,jpg,kv,atlas
 
-# (str) Application version
+# (str) Versão do aplicativo
 version = 1.0
 
-# (list) Application requirements
-# pyjnius é essencial para o botão "Enviar/Compartilhar" funcionar no Android
+# (list) Requisitos da aplicação
+# ADICIONADO: pyjnius (essencial para o botão ENVIAR no Android)
 requirements = python3,kivy,pyjnius
 
-# (str) Supported orientation (one of landscape, portrait or all)
+# (str) Orientação suportada (retrato)
 orientation = portrait
 
-# (bool) Indicate if the application should be fullscreen or not
+# (bool) Indicar se a aplicação deve ser tela cheia ou não
 fullscreen = 0
 
-# (list) Permissions
+# (list) Permissões do Android
 android.permissions = INTERNET
 
-# (int) Target Android API, should be as high as possible.
+# (int) Target Android API (33 é o padrão atual do Google Play)
 android.api = 33
 
-# (int) Minimum API your APK will support.
+# (int) API mínima suportada
 android.minapi = 21
 
-# (int) Android SDK version to use
+# (int) Versão do SDK do Android
 android.sdk = 33
 
-# (str) Android NDK version to use
+# (str) Versão do NDK do Android
 android.ndk = 25b
 
-# (bool) If True, then automatically accept SDK license
+# (bool) Aceitar automaticamente as licenças do SDK
 android.accept_sdk_license = True
 
-# (str) Android architecture to build for
+# (str) Arquitetura para build (arm64-v8a atende 99% dos celulares novos)
 android.archs = arm64-v8a
 
-# (str) Icon of the application (descomente e aponte para um arquivo se tiver um ícone)
-#icon.filename = %(source.dir)s/icon.png
-
-# (str) Presplash screen of the application
-#presplash.filename = %(source.dir)s/presplash.png
-
 [buildozer]
-# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+# (int) Nível de log (2 para ver erros detalhados se falhar)
 log_level = 2
 
-# (int) Display warning if buildozer is run as root (0 = off, 1 = on)
+# (int) Exibir aviso se rodar como root
 warn_on_root = 1
 
 [android]
-# (bool) Use the custom screen for the splash screen
+# (str) Nome da atividade principal
 android.entrypoint = org.kivy.android.PythonActivity
 
-# (list) List of Java classes to add to the compilation
-# Isso ajuda a garantir que o Pyjnius encontre as classes nativas do Android
+# (list) Classes Java para compilação (necessário para Pyjnius)
 android.add_jars =
