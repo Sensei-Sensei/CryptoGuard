@@ -1,18 +1,12 @@
 [app]
-# (str) Title of your application
 title = CryptoGuard
-
-# (str) Package name
 package.name = cryptoguard
-
-# (str) Package domain (needed for android packaging)
 package.domain = com.stazin
-
-# (str) Source code where the main.py live
 source.dir = .
-
-# (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas
+
+# ESTA LINHA É A QUE ESTÁ FALTANDO:
+version = 1.0
 
 # (list) Application requirements
 # ADICIONE OUTRAS LIBs AQUI, ex: python3,kivy,requests
