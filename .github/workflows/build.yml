@@ -11,7 +11,7 @@ jobs:
       - name: Checkout do Código
         uses: actions/checkout@v4
 
-      - name: Limpar Espaço em Disco (Evitar OOM)
+      - name: Liberar Espaço em Disco (Prevenir Crash por Memória)
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Instalar Dependências
+      - name: Instalar Dependências do Sistema
         run: |
           sudo apt update
           sudo apt install -y build-essential cmake git python3-dev python3-pip \
@@ -34,21 +34,25 @@ jobs:
             libtool unzip zip libsqlite3-dev libgdbm-dev libncursesw5-dev \
             libreadline-dev libbz2-dev tk-dev
 
-      - name: Instalar Buildozer
-        run: pip3 install --user --upgrade "cython<3.0" wheel "setuptools<70.0.0" buildozer
-
-      - name: Compilar APK
+      - name: Instalar Buildozer e Cython
         run: |
-          export PATH=$PATH:$HOME/.local/bin
+          pip3 install --user --upgrade pip
+          pip3 install --user "cython<3.0" "sh<2.0" "setuptools<70.0.0" buildozer
+
+      - name: Compilar APK com Buildozer
+        run: |
+          # 1. Configurar caminhos para usar o SDK que já existe no GitHub
           export ANDROID_HOME=$ANDROID_SDK_ROOT
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$HOME/.local/bin
           
-          # Aceitar licenças
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
+          # 2. Aceitar licenças do SDK oficial
+          yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
           
-          # Rodar buildozer limitando workers para não travar o runner
+          # 3. Executar o Buildozer em modo Debug para log detalhado
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
+          BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE: 1
 
       - name: Upload do APK
         uses: actions/upload-artifact@v4
