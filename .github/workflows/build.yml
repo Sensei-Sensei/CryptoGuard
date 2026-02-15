@@ -43,6 +43,12 @@ jobs:
         run: |
           export PATH=$PATH:$HOME/.local/bin
           export BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE=1
+          
+          # Garante que a pasta bin exista para evitar erros de permissão
+          mkdir -p bin
+          
+          # Inicia o build. O buildozer tentará baixar o SDK automaticamente.
+          # Se falhar por API, ele tentará recuperar no próximo passo.
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
