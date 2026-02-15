@@ -13,6 +13,10 @@ from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
+from kivy.config import Config
+
+# Força o menu de contexto (colar) a ser menor e mais discreto
+Config.set('kivy', 'textinput_selectable', '1')
 
 class CryptoScreen(MDScreen):
     def __init__(self, **kwargs):
@@ -27,16 +31,17 @@ class CryptoScreen(MDScreen):
             bold=True, theme_text_color="Primary", size_hint_y=None, height=dp(50)
         ))
 
-        # Campo Mensagem - Customizado para Seleção Bonita
+        # Campo Mensagem - Customizado
         self.msg_input = MDTextField(
             hint_text="Mensagem",
             mode="fill",
             multiline=True,
             input_type='text',
             fill_color_normal=(0.1, 0.1, 0.13, 1),
-            # Melhora o visual da seleção e do cursor
             cursor_color=(0.1, 0.5, 0.9, 1),
-            selection_color=(0.1, 0.5, 0.9, 0.3) 
+            selection_color=(0.1, 0.5, 0.9, 0.3),
+            # Desativa o menu feio padrão se preferir usar só o botão
+            use_bubble=True 
         )
         layout.add_widget(self.msg_input)
 
@@ -57,7 +62,7 @@ class CryptoScreen(MDScreen):
         pwd_container.add_widget(self.eye_btn)
         layout.add_widget(pwd_container)
 
-        # Botões
+        # Botões Principais
         btns = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
         btns.add_widget(MDRaisedButton(
             text="PROTEGER", md_bg_color=(0.1, 0.5, 0.9, 1),
@@ -79,8 +84,9 @@ class CryptoScreen(MDScreen):
         scroll.add_widget(self.result_label)
         layout.add_widget(scroll)
 
-        # Toolbar
-        toolbar = MDBoxLayout(spacing=dp(15), adaptive_size=True, pos_hint={"center_x": .5})
+        # Toolbar Atualizada com Botão de COLAR
+        toolbar = MDBoxLayout(spacing=dp(10), adaptive_size=True, pos_hint={"center_x": .5})
+        toolbar.add_widget(MDIconButton(icon="content-paste", on_release=self.paste_text)) # NOVO BOTÃO
         toolbar.add_widget(MDIconButton(icon="content-copy", on_release=self.copy_text))
         toolbar.add_widget(MDIconButton(icon="share-variant", on_release=self.share_text))
         toolbar.add_widget(MDIconButton(icon="key-plus", on_release=self.generate_pwd))
@@ -92,6 +98,10 @@ class CryptoScreen(MDScreen):
     def toggle_visibility(self, *args):
         self.pwd_input.password = not self.pwd_input.password
         self.eye_btn.icon = "eye" if not self.pwd_input.password else "eye-off"
+
+    def paste_text(self, *args):
+        # Pega o texto da área de transferência e coloca no input
+        self.msg_input.text = Clipboard.paste()
 
     def encrypt(self, *args):
         text, pwd = self.msg_input.text.strip(), self.pwd_input.text.strip()
