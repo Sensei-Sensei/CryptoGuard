@@ -4,7 +4,7 @@ package.name = cryptoguard
 package.domain = com.stazin
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 2.3
+version = 2.4
 
 requirements = python3, kivy==2.3.0, kivymd==1.2.0, pyjnius, pillow, setuptools, hostpython3, sdl2_ttf, sdl2_image
 
@@ -12,12 +12,10 @@ orientation = portrait
 fullscreen = 0
 android.permissions = INTERNET
 
-# Deixe o buildozer encontrar o SDK/NDK pelas variáveis de ambiente do GitHub
+# Configurações de API e NDK
 android.api = 33
 android.minapi = 21
-android.ndk_api = 21
-
-# IMPORTANTE: Garante que ele use as ferramentas do sistema se disponíveis
+android.ndk = 25b
 android.skip_update = False
 android.accept_sdk_license = True
 android.archs = arm64-v8a
