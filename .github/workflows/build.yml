@@ -32,13 +32,25 @@ jobs:
           pip3 install --user --upgrade pip
           pip3 install --user "cython<3.0" "sh<2.0" buildozer
 
+      - name: Preparar Android SDK (AIDL Fix)
+        run: |
+          # Define o local onde o Buildozer espera o SDK
+          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          
+          # Download das ferramentas de linha de comando do Android
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip commandlinetools-linux-9477386_latest.zip -d $ANDROID_HOME/cmdline-tools
+          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          
+          # Instalar build-tools e platforms necessários
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+          yes | sdkmanager --sdk_root=$ANDROID_HOME "build-tools;33.0.0" "platforms;android-33" "platform-tools"
+
       - name: Compilar APK com Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # Aceita licenças automaticamente
           export BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE=1
-          
-          # Executa o build direto (o buildozer cuidará do download do SDK/NDK)
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
