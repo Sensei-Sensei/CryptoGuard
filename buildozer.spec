@@ -4,21 +4,25 @@ package.name = cryptoguard
 package.domain = com.stazin
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 2.4
+version = 2.7
 
-requirements = python3, kivy==2.3.0, kivymd==1.2.0, pyjnius, pillow, setuptools, hostpython3, sdl2_ttf, sdl2_image
+# REQUISITOS CORRIGIDOS: Adicionado sqlite3 e openssl que o hashlib usa
+requirements = python3, kivy==2.3.0, kivymd==1.2.0, pyjnius, pillow, setuptools, hostpython3, sdl2_ttf, sdl2_image, openssl, sqlite3
 
 orientation = portrait
 fullscreen = 0
 android.permissions = INTERNET
 
-# Configurações de API e NDK
+# APIs E NDK (Compatibilidade Máxima)
 android.api = 33
 android.minapi = 21
 android.ndk = 25b
-android.skip_update = False
-android.accept_sdk_license = True
-android.archs = arm64-v8a
+android.ndk_api = 21
+android.archs = arm64-v8a, armeabi-v7a
+android.allow_backup = True
+
+# Garante que o Gradle use a versão correta
+android.gradle_dependencies = 'com.google.android.material:material:1.9.0'
 
 [buildozer]
 log_level = 2
