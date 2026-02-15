@@ -13,11 +13,10 @@ from kivymd.uix.snackbar import Snackbar
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 from kivy.core.clipboard import Clipboard
-from kivy.animation import Animation
 from kivy.utils import platform
 from kivy.config import Config
 
-# Desativa menus feios e bolinhas de seleção
+# Mantém a UI limpa
 Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
@@ -25,39 +24,37 @@ class CryptoScreen(MDScreen):
         super().__init__(**kwargs)
         self.last_result = ""
         
-        # Layout principal com fundo preto puro (OLED Friendly)
-        self.main_layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(50), dp(20), dp(20)], spacing=dp(25))
+        # Fundo Preto Puro
+        main_layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(50), dp(20), dp(20)], spacing=dp(25))
         
-        # 1. HEADER COM ANIMAÇÃO DE ENTRADA
-        self.header = MDLabel(
+        # Header
+        main_layout.add_widget(MDLabel(
             text="CRYPTO GUARD", halign="center", font_style="H5",
             bold=True, theme_text_color="Custom", text_color=(0, 0.8, 1, 1),
-            size_hint_y=None, height=dp(40), opacity=0
-        )
-        self.main_layout.add_widget(self.header)
+            size_hint_y=None, height=dp(40)
+        ))
 
-        # 2. CARD GLASSMORPHISM (Fundo translúcido refinado)
+        # Card Glassmorphism
         self.content_card = MDCard(
             orientation='vertical', padding=dp(20), spacing=dp(15),
             elevation=0, radius=[25,], 
-            md_bg_color=(1, 1, 1, 0.05), # Efeito Vidro
+            md_bg_color=(1, 1, 1, 0.05),
             size_hint_y=None, height=dp(440),
-            line_color=(1, 1, 1, 0.1), # Borda fina de vidro
-            opacity=0
+            line_color=(1, 1, 1, 0.1)
         )
 
-        # Campo Mensagem - Ortografia + Design Neon
+        # Campo Mensagem
         self.msg_input = MDTextField(
             hint_text="Mensagem Secreta",
             mode="rectangle", multiline=True,
             use_bubble=False, use_handles=False,
             fill_color_normal=(1, 1, 1, 0.02),
             input_type='text', keyboard_suggestions=True,
-            line_color_focus=(0, 0.8, 1, 1) # Brilho Neon ao focar
+            line_color_focus=(0, 0.8, 1, 1)
         )
         self.content_card.add_widget(self.msg_input)
 
-        # Container Senha
+        # Container Senha (ONDE ESTAVA O ERRO)
         pwd_box = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(60))
         self.pwd_input = MDTextField(
             hint_text="Chave de Acesso",
@@ -65,33 +62,35 @@ class CryptoScreen(MDScreen):
             use_bubble=False, line_color_focus=(0, 0.8, 1, 1),
             fill_color_normal=(1, 1, 1, 0.02)
         )
+        
+        # Botão do Olho - Simplificado para evitar crash
         self.eye_btn = MDIconButton(
-            icon="eye-off", on_release=self.toggle_visibility, 
-            pos_hint={"center_y": .5}, theme_text_color="Custom", icon_color=(0, 0.8, 1, 1)
+            icon="eye-off", 
+            on_release=self.toggle_visibility, 
+            pos_hint={"center_y": .5}, 
+            theme_text_color="Custom", 
+            icon_color=(0, 0.8, 1, 1)
         )
+        
         pwd_box.add_widget(self.pwd_input)
         pwd_box.add_widget(self.eye_btn)
         self.content_card.add_widget(pwd_box)
 
-        # Botões com Micro-interações
+        # Botões de Ação
         actions = MDBoxLayout(spacing=dp(12), size_hint_y=None, height=dp(55))
-        
-        self.btn_encrypt = MDFillRoundFlatIconButton(
+        actions.add_widget(MDFillRoundFlatIconButton(
             icon="shield-lock", text="PROTEGER", 
             md_bg_color=(0, 0.4, 0.8, 1), size_hint_x=0.5,
             on_release=self.encrypt
-        )
-        self.btn_decrypt = MDFillRoundFlatIconButton(
+        ))
+        actions.add_widget(MDFillRoundFlatIconButton(
             icon="lock-open-variant", text="REVELAR",
             md_bg_color=(0.15, 0.15, 0.18, 1), size_hint_x=0.5,
             on_release=self.decrypt
-        )
-        
-        actions.add_widget(self.btn_encrypt)
-        actions.add_widget(self.btn_decrypt)
+        ))
         self.content_card.add_widget(actions)
 
-        # Mini Card de Resultado
+        # Resultado
         res_container = MDCard(
             radius=[15,], md_bg_color=(0, 0, 0, 0.3), 
             padding=dp(10), size_hint_y=None, height=dp(100),
@@ -107,14 +106,13 @@ class CryptoScreen(MDScreen):
         res_container.add_widget(scroll)
         self.content_card.add_widget(res_container)
 
-        self.main_layout.add_widget(self.content_card)
+        main_layout.add_widget(self.content_card)
 
-        # 3. TOOLBAR FLUTUANTE (Floating Dock Style)
+        # Toolbar Dock
         self.toolbar = MDCard(
             radius=[30,], md_bg_color=(0.1, 0.1, 0.12, 0.9),
             adaptive_size=True, padding=[dp(15), dp(5)],
-            pos_hint={"center_x": .5}, elevation=4,
-            opacity=0
+            pos_hint={"center_x": .5}, elevation=4
         )
         
         tools = [
@@ -130,35 +128,16 @@ class CryptoScreen(MDScreen):
                 icon=icon, on_release=func, theme_text_color="Custom", icon_color=(0, 0.8, 1, 1)
             ))
 
-        self.main_layout.add_widget(self.toolbar)
-        self.add_widget(self.main_layout)
-        
-        # Dispara animações ao abrir
-        self.start_animations()
+        main_layout.add_widget(self.toolbar)
+        self.add_widget(main_layout)
 
-    def start_animations(self):
-        # Animação suave de "Fade-in" e subida
-        anim = Animation(opacity=1, duration=1)
-        anim.start(self.header)
-        anim.start(self.content_card)
-        anim.start(self.toolbar)
-
-    def show_toast(self, text, color=(0, 0.8, 1, 1)):
-        # Snackbars são muito mais bonitos que Labels estáticos
-        Snackbar(
-            text=text,
-            bg_color=color,
-            duration=2,
-            radius=[15,],
-            margin=dp(15)
-        ).open()
-
-    def toggle_visibility(self, *args):
+    def toggle_visibility(self, instance):
+        # Lógica direta: se é senha, vira texto comum e vice-versa
         self.pwd_input.password = not self.pwd_input.password
         self.eye_btn.icon = "eye" if not self.pwd_input.password else "eye-off"
-        # Micro-interação de escala no ícone
-        anim = Animation(scale_x=1.2, scale_y=1.2, duration=0.1) + Animation(scale_x=1, scale_y=1, duration=0.1)
-        anim.start(self.eye_btn)
+
+    def show_toast(self, text, color=(0, 0.8, 1, 1)):
+        Snackbar(text=text, bg_color=color, duration=2, radius=[15,], margin=dp(15)).open()
 
     def paste_text(self, *args):
         self.msg_input.text = Clipboard.paste()
@@ -168,12 +147,12 @@ class CryptoScreen(MDScreen):
         new_pwd = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
         self.pwd_input.text = new_pwd
         Clipboard.copy(new_pwd)
-        self.show_toast("Chave gerada e copiada!", color=(0, 0.6, 0.4, 1))
+        self.show_toast("Chave copiada!", color=(0, 0.6, 0.4, 1))
 
     def encrypt(self, *args):
         text, pwd = self.msg_input.text.strip(), self.pwd_input.text.strip()
         if not text or not pwd:
-            self.show_toast("Preencha todos os campos", color=(0.8, 0.2, 0.2, 1))
+            self.show_toast("Campos vazios!", color=(0.8, 0.2, 0.2, 1))
             return
         try:
             salt = secrets.token_bytes(16)
@@ -190,7 +169,7 @@ class CryptoScreen(MDScreen):
             self.result_label.text = final
             self.last_result = final
             Clipboard.copy(final)
-            self.show_toast("Mensagem Criptografada e Copiada!")
+            self.show_toast("Protegido e Copiado!")
         except Exception as e: self.show_toast(f"Erro: {str(e)}")
 
     def decrypt(self, *args):
@@ -200,7 +179,7 @@ class CryptoScreen(MDScreen):
             salt, hmac_rec, enc = data[:16], data[16:32], data[32:]
             key = hashlib.pbkdf2_hmac('sha256', pwd.encode(), salt, 100000)
             if hashlib.sha256(key + enc).digest()[:16] != hmac_rec:
-                self.show_toast("Chave Secreta Inválida!", color=(0.8, 0.2, 0.2, 1))
+                self.show_toast("Chave Incorreta!", color=(0.8, 0.2, 0.2, 1))
                 return
             expanded = b''
             counter = 0
@@ -210,8 +189,8 @@ class CryptoScreen(MDScreen):
             res = bytes(a ^ b for a, b in zip(enc, expanded[:len(enc)]))[8:].decode('utf-8')
             self.result_label.text = res
             self.last_result = res
-            self.show_toast("Mensagem Revelada!")
-        except: self.show_toast("Código inválido", color=(0.8, 0.2, 0.2, 1))
+            self.show_toast("Revelado!")
+        except: self.show_toast("Código Inválido", color=(0.8, 0.2, 0.2, 1))
 
     def share_text(self, *args):
         if not self.last_result: return
@@ -229,11 +208,11 @@ class CryptoScreen(MDScreen):
     def copy_text(self, *args):
         if self.last_result: 
             Clipboard.copy(self.last_result)
-            self.show_toast("Copiado com sucesso!")
+            self.show_toast("Copiado!")
 
     def clear_fields(self, *args):
         self.msg_input.text = ""; self.pwd_input.text = ""; self.result_label.text = "Aguardando comando..."
-        self.show_toast("Limpo!")
+        self.show_toast("Campos limpos")
 
 class CryptoGuardApp(MDApp):
     def build(self):
