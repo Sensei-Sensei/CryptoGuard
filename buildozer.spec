@@ -4,9 +4,9 @@ package.name = cryptoguard
 package.domain = com.stazin
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 3.9
+version = 4.0
 
-# Requirements - Removi espaços extras
+# REQUISITOS: openssl e sqlite3 são fundamentais para o app não crashar no início
 requirements = python3,hostpython3,kivy==2.3.0,kivymd==1.2.0,pillow,openssl,sqlite3,pyjnius
 
 orientation = portrait
@@ -24,7 +24,7 @@ android.entrypoint = org.kivy.android.PythonActivity
 android.archs = arm64-v8a
 android.enable_androidx = True
 
-# CORREÇÃO AQUI: Sem aspas simples extras, apenas a lista separada por vírgula
+# SEM ASPAS AQUI PARA NÃO QUEBRAR O GRADLEDependencies
 android.gradle_dependencies = com.google.android.material:material:1.5.0
 
 [buildozer]
