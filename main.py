@@ -4,7 +4,7 @@ import secrets
 import threading
 from kivy.config import Config
 
-# Configurações de interface
+# Configurações iniciais
 Config.set('kivy', 'keyboard_mode', 'system')
 Config.set('graphics', 'resizable', '0')
 
@@ -67,6 +67,7 @@ class CryptoScreen(MDScreen):
         Snackbar(text=info, bg_color=((0.8, 0.2, 0.2, 1) if is_error else (0, 0.6, 0.4, 1))).open()
 
     def start_encrypt(self, *args):
+        self.res_label.text = "Criptografando..."
         threading.Thread(target=self._encrypt_task, daemon=True).start()
 
     def _encrypt_task(self):
@@ -89,6 +90,7 @@ class CryptoScreen(MDScreen):
         except Exception as e: self.update_ui("", f"Erro: {str(e)}", True)
 
     def start_decrypt(self, *args):
+        self.res_label.text = "Revelando..."
         threading.Thread(target=self._decrypt_task, daemon=True).start()
 
     def _decrypt_task(self):
