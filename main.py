@@ -4,11 +4,10 @@ import secrets
 import string
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.button import MDRaisedButton, MDIconButton, MDFillRoundFlatButton
+from kivymd.uix.button import MDRaisedButton, MDIconButton, MDFillRoundFlatIconButton
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.card import MDCard
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
@@ -16,51 +15,48 @@ from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
 from kivy.config import Config
 
-# REMOVE O MENU DE CONTEXTO PADRÃO DO KIVY
-Config.set('kivy', 'textinput_selectable', '0') 
+# Desativa seleção nativa para evitar o menu feio
+Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.last_result = ""
         
-        # Fundo Principal
-        main_layout = MDBoxLayout(orientation='vertical', padding=dp(20), spacing=dp(20))
+        # Layout Principal com espaçamento maior no topo para não embolar
+        main_layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(40), dp(20), dp(20)], spacing=dp(20))
         
-        # HEADER COM ESTILO
-        header = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(5))
-        header.add_widget(MDLabel(
-            text="CRYPTO GUARD", halign="center", font_style="H4", 
-            bold=True, theme_text_color="Primary"
-        ))
-        header.add_widget(MDLabel(
-            text="Segurança Minimalista", halign="center", font_style="Caption",
-            theme_text_color="Secondary"
-        ))
-        main_layout.add_widget(header)
+        # HEADER CORRIGIDO (Apenas um Label centralizado)
+        self.header = MDLabel(
+            text="CRYPTO GUARD",
+            halign="center",
+            font_style="H5",
+            bold=True,
+            theme_text_color="Primary",
+            size_hint_y=None,
+            height=dp(60)
+        )
+        main_layout.add_widget(self.header)
 
-        # CARD CENTRAL (Efeito Glassmorphism)
+        # CARD CENTRAL
         content_card = MDCard(
-            orientation='vertical', padding=dp(15), spacing=dp(15),
+            orientation='vertical', padding=dp(20), spacing=dp(15),
             elevation=2, radius=[20,], md_bg_color=(0.12, 0.12, 0.15, 1),
-            size_hint_y=None, height=dp(420)
+            size_hint_y=None, height=dp(400)
         )
 
-        # Campo Mensagem (Menu desativado)
+        # Campo Mensagem (Sem emojis no hint para evitar erro)
         self.msg_input = MDTextField(
-            hint_text="Mensagem para processar",
+            hint_text="Texto para Processar",
             mode="rectangle",
             multiline=True,
-            input_type='text',
-            use_bubble=False,  # REMOVE O MENU FEIO
-            use_handles=False, # REMOVE AS BOLINHAS DE SELEÇÃO
+            use_bubble=False,
             fill_color_normal=(0.08, 0.08, 0.1, 1),
         )
         content_card.add_widget(self.msg_input)
 
-        # Container Senha com Revelar e Gerar
+        # Container Senha
         pwd_box = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(60))
-        
         self.pwd_input = MDTextField(
             hint_text="Chave Secreta",
             password=True,
@@ -68,64 +64,70 @@ class CryptoScreen(MDScreen):
             use_bubble=False,
             fill_color_normal=(0.08, 0.08, 0.1, 1),
         )
-        
-        # Botão Olhinho
         self.eye_btn = MDIconButton(
             icon="eye-off",
             on_release=self.toggle_visibility,
             pos_hint={"center_y": .5}
         )
-        
         pwd_box.add_widget(self.pwd_input)
         pwd_box.add_widget(self.eye_btn)
         content_card.add_widget(pwd_box)
 
-        # Botões de Ação de Alto Impacto
-        actions = MDBoxLayout(spacing=dp(15), size_hint_y=None, height=dp(55))
-        actions.add_widget(MDFillRoundFlatButton(
-            text="🔒 PROTEGER", md_bg_color=(0.1, 0.4, 0.9, 1),
-            size_hint_x=0.5, font_size=dp(16), on_release=self.encrypt
-        ))
-        actions.add_widget(MDFillRoundFlatButton(
-            text="🔓 REVELAR", md_bg_color=(0.2, 0.2, 0.25, 1),
-            size_hint_x=0.5, font_size=dp(16), on_release=self.decrypt
-        ))
+        # BOTÕES CORRIGIDOS (Usando ícone interno do KivyMD em vez de emoji)
+        actions = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
+        
+        self.btn_protect = MDFillRoundFlatIconButton(
+            icon="lock",
+            text="PROTEGER",
+            md_bg_color=(0.1, 0.5, 0.9, 1),
+            size_hint_x=0.5,
+            on_release=self.encrypt
+        )
+        
+        self.btn_reveal = MDFillRoundFlatIconButton(
+            icon="lock-open-variant",
+            text="REVELAR",
+            md_bg_color=(0.2, 0.2, 0.25, 1),
+            size_hint_x=0.5,
+            on_release=self.decrypt
+        )
+        
+        actions.add_widget(self.btn_protect)
+        actions.add_widget(self.btn_reveal)
         content_card.add_widget(actions)
 
-        # Área de Resultado em um Mini Card
+        # Área de Resultado
         res_card = MDCard(
             radius=[15,], md_bg_color=(0.08, 0.08, 0.1, 1), 
-            padding=dp(10), size_hint_y=None, height=dp(80)
+            padding=dp(10), size_hint_y=None, height=dp(100)
         )
         scroll = ScrollView()
         self.result_label = MDLabel(
-            text="Aguardando...", halign="center", 
-            theme_text_color="Secondary", font_style="Caption"
+            text="Aguardando...",
+            halign="center",
+            theme_text_color="Secondary",
+            font_style="Caption",
+            size_hint_y=None
         )
+        self.result_label.bind(texture_size=self.result_label.setter('size'))
         scroll.add_widget(self.result_label)
         res_card.add_widget(scroll)
         content_card.add_widget(res_card)
 
         main_layout.add_widget(content_card)
 
-        # TOOLBAR INFERIOR (Floating Style)
+        # TOOLBAR INFERIOR
         toolbar = MDCard(
             radius=[25,], md_bg_color=(0.15, 0.15, 0.2, 1),
-            adaptive_size=True, padding=[dp(20), dp(5)],
+            adaptive_size=True, padding=[dp(15), dp(5)],
             pos_hint={"center_x": .5}, elevation=4
         )
         
-        # Botões da Barra
-        icons = [
-            ("content-paste", self.paste_text),
-            ("content-copy", self.copy_text),
-            ("share-variant", self.share_text),
-            ("key-plus", self.generate_pwd),
-            ("delete-sweep", self.clear_fields)
-        ]
-
-        for icon, func in icons:
-            toolbar.add_widget(MDIconButton(icon=icon, on_release=func, theme_text_color="Custom", icon_color=(1,1,1,1)))
+        toolbar.add_widget(MDIconButton(icon="content-paste", on_release=self.paste_text))
+        toolbar.add_widget(MDIconButton(icon="content-copy", on_release=self.copy_text))
+        toolbar.add_widget(MDIconButton(icon="share-variant", on_release=self.share_text))
+        toolbar.add_widget(MDIconButton(icon="key-plus", on_release=self.generate_pwd))
+        toolbar.add_widget(MDIconButton(icon="delete-sweep", on_release=self.clear_fields))
 
         main_layout.add_widget(toolbar)
         self.add_widget(main_layout)
@@ -136,6 +138,14 @@ class CryptoScreen(MDScreen):
 
     def paste_text(self, *args):
         self.msg_input.text = Clipboard.paste()
+
+    def generate_pwd(self, *args):
+        # Gera, define no input e já copia para a área de transferência
+        new_pwd = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+        self.pwd_input.text = new_pwd
+        self.last_result = new_pwd
+        self.result_label.text = f"CHAVE GERADA E COPIADA:\n{new_pwd}"
+        Clipboard.copy(new_pwd)
 
     def encrypt(self, *args):
         text, pwd = self.msg_input.text.strip(), self.pwd_input.text.strip()
@@ -154,6 +164,7 @@ class CryptoScreen(MDScreen):
             final = base64.b64encode(salt + hashlib.sha256(key + enc).digest()[:16] + enc).decode()
             self.result_label.text = final
             self.last_result = final
+            Clipboard.copy(final) # Copia o resultado automaticamente
         except Exception as e: self.result_label.text = str(e)
 
     def decrypt(self, *args):
@@ -189,10 +200,9 @@ class CryptoScreen(MDScreen):
         else: Clipboard.copy(self.last_result)
 
     def copy_text(self, *args):
-        if self.last_result: Clipboard.copy(self.last_result)
-
-    def generate_pwd(self, *args):
-        self.pwd_input.text = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+        if self.last_result: 
+            Clipboard.copy(self.last_result)
+            self.result_label.text = "Copiado para a área de transferência!"
 
     def clear_fields(self, *args):
         self.msg_input.text = ""; self.pwd_input.text = ""; self.result_label.text = "Aguardando..."
