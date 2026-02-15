@@ -35,14 +35,10 @@ jobs:
       - name: Compilar APK com Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # Usando o SDK/NDK pré-instalado do GitHub para evitar downloads viciados
-          export ANDROID_SDK_ROOT=$ANDROID_HOME
-          export ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME
+          # Aceita licenças automaticamente
+          export BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE=1
           
-          # Aceita licenças e limpa builds anteriores
-          yes | buildozer android clean
-          
-          # Inicia o build ignorando o download do SDK interno
+          # Executa o build direto (o buildozer cuidará do download do SDK/NDK)
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
