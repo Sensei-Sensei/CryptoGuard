@@ -21,24 +21,33 @@ class CryptoScreen(MDScreen):
         
         layout = MDBoxLayout(orientation='vertical', padding=dp(20), spacing=dp(10))
         
-        # Título
+        # Header
         layout.add_widget(MDLabel(
             text="CRYPTO GUARD", halign="center", font_style="H5", 
             bold=True, theme_text_color="Primary", size_hint_y=None, height=dp(50)
         ))
 
-        # Input Mensagem (Corretor habilitado)
+        # Campo Mensagem - Customizado para Seleção Bonita
         self.msg_input = MDTextField(
-            hint_text="Mensagem", mode="fill", multiline=True,
-            input_type='text', fill_color_normal=(0.1, 0.1, 0.13, 1)
+            hint_text="Mensagem",
+            mode="fill",
+            multiline=True,
+            input_type='text',
+            fill_color_normal=(0.1, 0.1, 0.13, 1),
+            # Melhora o visual da seleção e do cursor
+            cursor_color=(0.1, 0.5, 0.9, 1),
+            selection_color=(0.1, 0.5, 0.9, 0.3) 
         )
         layout.add_widget(self.msg_input)
 
-        # Container Senha com Revelar
+        # Container Senha
         pwd_container = MDRelativeLayout(size_hint_y=None, height=dp(60))
         self.pwd_input = MDTextField(
-            hint_text="Chave Secreta", password=True, mode="fill",
-            fill_color_normal=(0.1, 0.1, 0.13, 1)
+            hint_text="Chave Secreta",
+            password=True,
+            mode="fill",
+            fill_color_normal=(0.1, 0.1, 0.13, 1),
+            cursor_color=(0.1, 0.5, 0.9, 1)
         )
         self.eye_btn = MDIconButton(
             icon="eye-off", pos_hint={"center_y": .5, "right": 1},
@@ -48,7 +57,7 @@ class CryptoScreen(MDScreen):
         pwd_container.add_widget(self.eye_btn)
         layout.add_widget(pwd_container)
 
-        # Botões Principais
+        # Botões
         btns = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
         btns.add_widget(MDRaisedButton(
             text="PROTEGER", md_bg_color=(0.1, 0.5, 0.9, 1),
@@ -70,7 +79,7 @@ class CryptoScreen(MDScreen):
         scroll.add_widget(self.result_label)
         layout.add_widget(scroll)
 
-        # Barra de Ícones (Emojis que funcionam)
+        # Toolbar
         toolbar = MDBoxLayout(spacing=dp(15), adaptive_size=True, pos_hint={"center_x": .5})
         toolbar.add_widget(MDIconButton(icon="content-copy", on_release=self.copy_text))
         toolbar.add_widget(MDIconButton(icon="share-variant", on_release=self.share_text))
