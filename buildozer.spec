@@ -1,74 +1,88 @@
 [app]
-# (str) Title of your application
+
+# (str) Nome do aplicativo
 title = CryptoGuard
 
-# (str) Package name
+# (str) Nome do pacote
 package.name = cryptoguard
 
-# (str) Package domain (needed for android packaging)
+# (str) Domínio do pacote
 package.domain = com.stazin
 
-# (str) Source code where the main.py live
+# (str) Diretório onde está o main.py
 source.dir = .
 
-# (list) Source files to include (let empty to include all the files)
+# (list) Extensões de arquivos a serem incluídos
 source.include_exts = py,png,jpg,kv,atlas
 
-# (str) Application versioning
-version = 3.2
+# (str) Versão do App - Suba para 3.3 para limpar caches antigos
+version = 3.3
 
-# (list) Application requirements
-# O openssl e sqlite3 são OBRIGATÓRIOS para o hashlib não crashar no Android
-requirements = python3, kivy==2.3.0, kivymd==1.2.0, pillow, openssl, sqlite3, pyjnius, hostpython3, setuptools
+# (list) Requisitos do Aplicativo
+# A ordem aqui é vital. hostpython3 e setuptools garantem a compilação.
+# openssl e sqlite3 são obrigatórios para as funções de hashlib e seguranca.
+requirements = python3, kivy==2.3.0, kivymd==1.2.0, pillow, openssl, sqlite3, pyjnius, setuptools, hostpython3
 
-# (str) Supported orientation
+# (str) Orientação da tela
 orientation = portrait
 
-# (bool) Indicate if the application should be fullscreen or not
+# (bool) Fullscreen (0 para mostrar a barra de status, melhor para apps de ferramentas)
 fullscreen = 0
 
-# (list) Permissions
+# (list) Permissões do Android
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
 
-# (int) Target Android API
+# (int) API alvo (33 é o padrão atual da Play Store)
 android.api = 33
 
-# (int) Minimum API your APK will support
+# (int) API mínima suportada
 android.minapi = 21
 
-# (int) Android SDK version to use
+# (int) Versão do SDK do Android a usar
 android.sdk = 33
 
-# (str) Android NDK version to use
+# (str) Versão do NDK do Android (25b é a mais estável para Kivy/KivyMD)
 android.ndk = 25b
 
-# (int) Android NDK API to use
+# (int) API do NDK do Android
 android.ndk_api = 21
 
-# (bool) Use --private data storage (True) or --dir public storage (False)
+# (bool) Usar armazenamento privado (Recomendado: True)
 android.private_storage = True
 
-# (bool) If True, then skip trying to update the Android sdk
+# (bool) Pular atualização do SDK (Deixe False para o GitHub preparar o ambiente)
 android.skip_update = False
 
-# (bool) If True, then automatically accept SDK license
+# (bool) Aceitar licenças automaticamente
 android.accept_sdk_license = True
 
-# (str) Android entry point
+# (str) Ponto de entrada do Android
 android.entrypoint = org.kivy.android.PythonActivity
 
-# (str) The Android arch to build for
+# (str) Arquitetura alvo
+# Usamos apenas arm64-v8a para o build ser mais rápido e economizar RAM no GitHub.
+# Celulares modernos (99%) usam arm64.
 android.archs = arm64-v8a
 
-# (bool) enables Android auto backup feature (Android API >= 23)
+# (bool) Habilitar backup automático
 android.allow_backup = True
 
-# (list) Gradle dependencies
+# (list) Dependências Gradle (Necessário para alguns componentes do KivyMD)
 android.gradle_dependencies = 'com.google.android.material:material:1.9.0'
 
+# (bool) Ativar suporte a Android X (Obrigatório para KivyMD moderno)
+android.enable_androidx = True
+
 [buildozer]
-# (int) Log level (2 = debug para vermos erros detalhados)
+
+# (int) Nível de Log (2 para debug detalhado caso algo falhe)
 log_level = 2
 
-# (int) Display warning if buildozer is run as root
+# (int) Exibir aviso se rodar como root
 warn_on_root = 1
+
+# (str) Caminho para os artefatos de build (opcional)
+# build_dir = ./.buildozer
+
+# (str) Caminho para o diretório de saída (onde o APK aparecerá)
+bin_dir = ./bin
