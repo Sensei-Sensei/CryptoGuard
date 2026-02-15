@@ -20,7 +20,6 @@ jobs:
       - name: Instalar Dependências do Sistema
         run: |
           sudo apt update
-          # Instalando apenas o essencial para evitar o erro de "broken packages"
           sudo apt install -y \
             build-essential \
             cmake \
@@ -43,28 +42,37 @@ jobs:
             automake \
             libtool \
             unzip \
-            zip
+            zip \
+            libsqlite3-dev \
+            libgdbm-dev \
+            libncursesw5-dev \
+            libreadline-gplv2-dev \
+            libbz2-dev \
+            tk-dev
+
+      - name: Cache do Buildozer
+        # Isso acelera os builds futuros em até 15 minutos
+        uses: actions/cache@v4
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
 
       - name: Instalar Buildozer e Cython
         run: |
           pip3 install --user --upgrade pip
-          # Forçando versões que não brigam entre si
+          # Cython < 3.0 é obrigatório para não dar erro no Kivy
           pip3 install --user "cython<3.0" "sh<2.0" buildozer
 
       - name: Compilar APK com Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          # O BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE substitui o comando 'yes' e evita Broken Pipe
+          # Aceita licenças e inicia o build em modo verboso
           export BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE=1
           
-          # Se o spec não existir, ele cria um (mas use o que te mandei antes)
-          if [ ! -f buildozer.spec ]; then
-            buildozer init
-          fi
-          
+          # Garante que o buildozer.spec que você editou seja o usado
           buildozer -v android debug
         env:
-          BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE: 1
+          BUILDOZER_WARN_ON_ROOT: 0
 
       - name: Upload do APK
         uses: actions/upload-artifact@v4
