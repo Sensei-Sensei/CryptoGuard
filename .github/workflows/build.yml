@@ -20,19 +20,12 @@ jobs:
       - name: Instalar Dependências do Sistema
         run: |
           sudo apt update
-          sudo apt install -y \
-            build-essential cmake git python3-dev python3-pip \
+          sudo apt install -y build-essential cmake git python3-dev python3-pip \
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
             libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
             zlib1g-dev pkg-config libffi-dev libssl-dev autoconf automake \
             libtool unzip zip libsqlite3-dev libgdbm-dev libncursesw5-dev \
             libreadline-dev libbz2-dev tk-dev
-
-      - name: Cache do Buildozer
-        uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
 
       - name: Instalar Buildozer e Cython
         run: |
@@ -42,13 +35,14 @@ jobs:
       - name: Compilar APK com Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
-          export BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE=1
+          # Usando o SDK/NDK pré-instalado do GitHub para evitar downloads viciados
+          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME
           
-          # Garante que a pasta bin exista para evitar erros de permissão
-          mkdir -p bin
+          # Aceita licenças e limpa builds anteriores
+          yes | buildozer android clean
           
-          # Inicia o build. O buildozer tentará baixar o SDK automaticamente.
-          # Se falhar por API, ele tentará recuperar no próximo passo.
+          # Inicia o build ignorando o download do SDK interno
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
@@ -58,4 +52,3 @@ jobs:
         with:
           name: CryptoGuard-APK
           path: bin/*.apk
-          if-no-files-found: error
