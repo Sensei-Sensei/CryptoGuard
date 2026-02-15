@@ -4,10 +4,10 @@ package.name = cryptoguard
 package.domain = com.stazin
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 3.8
+version = 3.9
 
-# Requisitos essenciais (Removido setuptools para evitar erro experimental)
-requirements = python3, hostpython3, kivy==2.3.0, kivymd==1.2.0, pillow, openssl, sqlite3, pyjnius
+# Requirements - Removi espaços extras
+requirements = python3,hostpython3,kivy==2.3.0,kivymd==1.2.0,pillow,openssl,sqlite3,pyjnius
 
 orientation = portrait
 fullscreen = 0
@@ -21,11 +21,11 @@ android.private_storage = True
 android.skip_update = False
 android.accept_sdk_license = True
 android.entrypoint = org.kivy.android.PythonActivity
-
-# Focar em arm64-v8a evita estouro de memória no GitHub
 android.archs = arm64-v8a
 android.enable_androidx = True
-android.gradle_dependencies = 'com.google.android.material:material:1.5.0'
+
+# CORREÇÃO AQUI: Sem aspas simples extras, apenas a lista separada por vírgula
+android.gradle_dependencies = com.google.android.material:material:1.5.0
 
 [buildozer]
 log_level = 2
