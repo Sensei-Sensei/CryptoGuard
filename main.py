@@ -16,7 +16,8 @@ from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
 from kivy.config import Config
 
-# Desativa menus nativos que causam instabilidade
+# CORREÇÃO CRÍTICA: Desativa o teclado preditivo que causa o bug de ordem aleatória
+Config.set('kivy', 'keyboard_mode', 'system')
 Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
@@ -26,24 +27,30 @@ class CryptoScreen(MDScreen):
         
         main_layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(50), dp(20), dp(20)], spacing=dp(25))
         
-        # Header Neon
         main_layout.add_widget(MDLabel(
             text="CRYPTO GUARD", halign="center", font_style="H5",
             bold=True, theme_text_color="Custom", text_color=(0, 0.8, 1, 1),
             size_hint_y=None, height=dp(40)
         ))
 
-        # Card Central (Glassmorphism)
         self.content_card = MDCard(
             orientation='vertical', padding=dp(20), spacing=dp(15),
             elevation=0, radius=[25,], md_bg_color=(1, 1, 1, 0.05),
             size_hint_y=None, height=dp(440), line_color=(1, 1, 1, 0.1)
         )
 
+        # Campo Mensagem - AJUSTADO PARA EVITAR BUG DE DIGITAÇÃO
         self.msg_input = MDTextField(
-            hint_text="Mensagem Secreta", mode="rectangle", multiline=True,
-            use_bubble=False, use_handles=False, fill_color_normal=(1, 1, 1, 0.02),
-            input_type='text', line_color_focus=(0, 0.8, 1, 1)
+            hint_text="Mensagem Secreta",
+            mode="rectangle",
+            multiline=True,
+            use_bubble=False,
+            use_handles=False,
+            fill_color_normal=(1, 1, 1, 0.02),
+            line_color_focus=(0, 0.8, 1, 1),
+            # Desativar sugestões ajuda a parar o bug das letras aleatórias no Android
+            input_type='text',
+            keyboard_suggestions=False 
         )
         self.content_card.add_widget(self.msg_input)
 
@@ -51,7 +58,8 @@ class CryptoScreen(MDScreen):
         self.pwd_input = MDTextField(
             hint_text="Chave de Acesso", password=True, mode="rectangle",
             use_bubble=False, line_color_focus=(0, 0.8, 1, 1),
-            fill_color_normal=(1, 1, 1, 0.02)
+            fill_color_normal=(1, 1, 1, 0.02),
+            keyboard_suggestions=False
         )
         self.eye_btn = MDIconButton(
             icon="eye-off", on_release=self.toggle_visibility, 
@@ -86,7 +94,6 @@ class CryptoScreen(MDScreen):
 
         main_layout.add_widget(self.content_card)
 
-        # Toolbar Inferior
         self.toolbar = MDCard(
             radius=[30,], md_bg_color=(0.1, 0.1, 0.12, 0.9),
             adaptive_size=True, padding=[dp(15), dp(5)],
@@ -125,58 +132,46 @@ class CryptoScreen(MDScreen):
         if not text or not pwd:
             self.show_toast("Preencha os campos!", color=(0.8, 0.2, 0.2, 1))
             return
-        
         try:
-            # PBKDF2 + AES-Style XOR
             salt = secrets.token_bytes(16)
             key = hashlib.pbkdf2_hmac('sha256', pwd.encode(), salt, 100000)
             nonce = secrets.token_bytes(8)
             data_bytes = nonce + text.encode('utf-8')
-            
-            # Expansão de chave segura
             expanded = b''
             counter = 0
             while len(expanded) < len(data_bytes):
                 expanded += hashlib.sha256(key + counter.to_bytes(4, 'big')).digest()
                 counter += 1
-            
             enc = bytes(a ^ b for a, b in zip(data_bytes, expanded))
             auth_tag = hashlib.sha256(key + enc).digest()[:16]
             final = base64.b64encode(salt + auth_tag + enc).decode()
-            
             self.result_label.text = final
             self.last_result = final
             Clipboard.copy(final)
-            self.show_toast("Protegido e Copiado!")
-        except Exception as e:
-            self.show_toast(f"Erro no processamento", color=(0.8, 0.2, 0.2, 1))
+            self.show_toast("Protegido!")
+        except: self.show_toast("Erro no processamento", color=(0.8, 0.2, 0.2, 1))
 
     def decrypt(self, *args):
         text = self.msg_input.text.strip()
         pwd = self.pwd_input.text.strip()
         if not text or not pwd: return
-        
         try:
             raw = base64.b64decode(text)
             salt, auth_tag, enc = raw[:16], raw[16:32], raw[32:]
             key = hashlib.pbkdf2_hmac('sha256', pwd.encode(), salt, 100000)
-            
             if hashlib.sha256(key + enc).digest()[:16] != auth_tag:
                 self.show_toast("Chave Incorreta!", color=(0.8, 0.2, 0.2, 1))
                 return
-
             expanded = b''
             counter = 0
             while len(expanded) < len(enc):
                 expanded += hashlib.sha256(key + counter.to_bytes(4, 'big')).digest()
                 counter += 1
-            
             res = bytes(a ^ b for a, b in zip(enc, expanded))[8:].decode('utf-8')
             self.result_label.text = res
             self.last_result = res
             self.show_toast("Revelado!")
-        except:
-            self.show_toast("Falha na decodificação", color=(0.8, 0.2, 0.2, 1))
+        except: self.show_toast("Falha na decodificação", color=(0.8, 0.2, 0.2, 1))
 
     def share_text(self, *args):
         if not self.last_result: return
