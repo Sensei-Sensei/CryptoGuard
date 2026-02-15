@@ -19,53 +19,46 @@ class CryptoScreen(MDScreen):
         super().__init__(**kwargs)
         self.last_result = ""
         
-        layout = MDBoxLayout(orientation='vertical', padding=dp(20), spacing=dp(15))
+        layout = MDBoxLayout(orientation='vertical', padding=dp(20), spacing=dp(10))
         
-        # Título com Ícone (Escudo)
-        header = MDBoxLayout(adaptive_size=True, pos_hint={"center_x": .5}, spacing=dp(10))
-        header.add_widget(MDIconButton(icon="shield-lock", theme_text_color="Custom", icon_color=(0.1, 0.5, 0.9, 1)))
-        header.add_widget(MDLabel(text="CRYPTO GUARD", font_style="H5", bold=True, adaptive_size=True))
-        layout.add_widget(header)
+        # Título
+        layout.add_widget(MDLabel(
+            text="CRYPTO GUARD", halign="center", font_style="H5", 
+            bold=True, theme_text_color="Primary", size_hint_y=None, height=dp(50)
+        ))
 
-        # Campo de Mensagem - Habilitado para Corretor Ortográfico
+        # Input Mensagem (Corretor habilitado)
         self.msg_input = MDTextField(
-            hint_text="Mensagem",
-            mode="fill",
-            multiline=True,
-            input_type='text',  # Ativa o corretor do teclado
-            fill_color_normal=(0.1, 0.1, 0.13, 1)
+            hint_text="Mensagem", mode="fill", multiline=True,
+            input_type='text', fill_color_normal=(0.1, 0.1, 0.13, 1)
         )
         layout.add_widget(self.msg_input)
 
-        # Campo de Senha com Botão de Revelar (Olhinho)
+        # Container Senha com Revelar
         pwd_container = MDRelativeLayout(size_hint_y=None, height=dp(60))
         self.pwd_input = MDTextField(
-            hint_text="Chave Secreta",
-            password=True,
-            mode="fill",
-            fill_color_normal=(0.1, 0.1, 0.13, 1),
-            padding=[dp(15), dp(15), dp(50), dp(15)] # Espaço para o ícone
+            hint_text="Chave Secreta", password=True, mode="fill",
+            fill_color_normal=(0.1, 0.1, 0.13, 1)
         )
         self.eye_btn = MDIconButton(
-            icon="eye-off",
-            pos_hint={"center_y": .5, "right": 1},
-            on_release=self.toggle_password_visibility
+            icon="eye-off", pos_hint={"center_y": .5, "right": 1},
+            on_release=self.toggle_visibility
         )
         pwd_container.add_widget(self.pwd_input)
         pwd_container.add_widget(self.eye_btn)
         layout.add_widget(pwd_container)
 
         # Botões Principais
-        actions = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
-        actions.add_widget(MDRaisedButton(
+        btns = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
+        btns.add_widget(MDRaisedButton(
             text="PROTEGER", md_bg_color=(0.1, 0.5, 0.9, 1),
             size_hint_x=0.5, on_release=self.encrypt
         ))
-        actions.add_widget(MDRaisedButton(
+        btns.add_widget(MDRaisedButton(
             text="REVELAR", md_bg_color=(0.2, 0.2, 0.25, 1),
             size_hint_x=0.5, on_release=self.decrypt
         ))
-        layout.add_widget(actions)
+        layout.add_widget(btns)
 
         # Resultado
         scroll = ScrollView()
@@ -77,17 +70,17 @@ class CryptoScreen(MDScreen):
         scroll.add_widget(self.result_label)
         layout.add_widget(scroll)
 
-        # Toolbar Inferior com Ícones de Alta Definição
+        # Barra de Ícones (Emojis que funcionam)
         toolbar = MDBoxLayout(spacing=dp(15), adaptive_size=True, pos_hint={"center_x": .5})
-        toolbar.add_widget(MDIconButton(icon="content-copy", tooltip_text="Copiar", on_release=self.copy_text))
-        toolbar.add_widget(MDIconButton(icon="share-variant", tooltip_text="Enviar", on_release=self.share_text))
-        toolbar.add_widget(MDIconButton(icon="key-plus", tooltip_text="Gerar Chave", on_release=self.generate_pwd))
-        toolbar.add_widget(MDIconButton(icon="delete-sweep", tooltip_text="Limpar", on_release=self.clear_fields))
+        toolbar.add_widget(MDIconButton(icon="content-copy", on_release=self.copy_text))
+        toolbar.add_widget(MDIconButton(icon="share-variant", on_release=self.share_text))
+        toolbar.add_widget(MDIconButton(icon="key-plus", on_release=self.generate_pwd))
+        toolbar.add_widget(MDIconButton(icon="delete-sweep", on_release=self.clear_fields))
         layout.add_widget(toolbar)
 
         self.add_widget(layout)
 
-    def toggle_password_visibility(self, instance):
+    def toggle_visibility(self, *args):
         self.pwd_input.password = not self.pwd_input.password
         self.eye_btn.icon = "eye" if not self.pwd_input.password else "eye-off"
 
@@ -104,11 +97,11 @@ class CryptoScreen(MDScreen):
             while len(expanded) < len(combined):
                 expanded += hashlib.sha256(key + counter.to_bytes(4, 'big')).digest()
                 counter += 1
-            enc = bytes(a ^ b for a, b in zip(combined, expanded))
+            enc = bytes(a ^ b for a, b in zip(combined, expanded[:len(combined)]))
             final = base64.b64encode(salt + hashlib.sha256(key + enc).digest()[:16] + enc).decode()
             self.result_label.text = final
             self.last_result = final
-        except Exception as e: self.result_label.text = f"Erro: {str(e)}"
+        except Exception as e: self.result_label.text = str(e)
 
     def decrypt(self, *args):
         text, pwd = self.msg_input.text.strip(), self.pwd_input.text.strip()
@@ -124,7 +117,7 @@ class CryptoScreen(MDScreen):
             while len(expanded) < len(enc):
                 expanded += hashlib.sha256(key + counter.to_bytes(4, 'big')).digest()
                 counter += 1
-            res = bytes(a ^ b for a, b in zip(enc, expanded))[8:].decode('utf-8')
+            res = bytes(a ^ b for a, b in zip(enc, expanded[:len(enc)]))[8:].decode('utf-8')
             self.result_label.text = res
             self.last_result = res
         except: self.result_label.text = "Código Inválido!"
@@ -139,16 +132,15 @@ class CryptoScreen(MDScreen):
             intent = Intent(Intent.ACTION_SEND)
             intent.setType("text/plain")
             intent.putExtra(Intent.EXTRA_TEXT, String(self.last_result))
-            PythonActivity.mActivity.startActivity(Intent.createChooser(intent, String("Enviar via:")))
+            PythonActivity.mActivity.startActivity(Intent.createChooser(intent, String("Enviar:")))
         else: Clipboard.copy(self.last_result)
 
     def copy_text(self, *args):
         if self.last_result: Clipboard.copy(self.last_result)
 
     def generate_pwd(self, *args):
-        new_key = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
-        self.pwd_input.text = new_key
-        self.result_label.text = f"Nova Chave Gerada: {new_key}\n(Use o botão de olho para ver acima)"
+        new_pwd = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+        self.pwd_input.text = new_pwd
 
     def clear_fields(self, *args):
         self.msg_input.text = ""; self.pwd_input.text = ""; self.result_label.text = "Aguardando..."
