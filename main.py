@@ -4,103 +4,137 @@ import secrets
 import string
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.button import MDRaisedButton, MDIconButton
+from kivymd.uix.button import MDRaisedButton, MDIconButton, MDFillRoundFlatButton
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.relativelayout import MDRelativeLayout
+from kivymd.uix.card import MDCard
 from kivy.uix.scrollview import ScrollView
 from kivy.metrics import dp
 from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
 from kivy.config import Config
 
-# Força o menu de contexto (colar) a ser menor e mais discreto
-Config.set('kivy', 'textinput_selectable', '1')
+# REMOVE O MENU DE CONTEXTO PADRÃO DO KIVY
+Config.set('kivy', 'textinput_selectable', '0') 
 
 class CryptoScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.last_result = ""
         
-        layout = MDBoxLayout(orientation='vertical', padding=dp(20), spacing=dp(10))
+        # Fundo Principal
+        main_layout = MDBoxLayout(orientation='vertical', padding=dp(20), spacing=dp(20))
         
-        # Header
-        layout.add_widget(MDLabel(
-            text="CRYPTO GUARD", halign="center", font_style="H5", 
-            bold=True, theme_text_color="Primary", size_hint_y=None, height=dp(50)
+        # HEADER COM ESTILO
+        header = MDBoxLayout(orientation='vertical', adaptive_height=True, spacing=dp(5))
+        header.add_widget(MDLabel(
+            text="CRYPTO GUARD", halign="center", font_style="H4", 
+            bold=True, theme_text_color="Primary"
         ))
+        header.add_widget(MDLabel(
+            text="Segurança Minimalista", halign="center", font_style="Caption",
+            theme_text_color="Secondary"
+        ))
+        main_layout.add_widget(header)
 
-        # Campo Mensagem - Customizado
+        # CARD CENTRAL (Efeito Glassmorphism)
+        content_card = MDCard(
+            orientation='vertical', padding=dp(15), spacing=dp(15),
+            elevation=2, radius=[20,], md_bg_color=(0.12, 0.12, 0.15, 1),
+            size_hint_y=None, height=dp(420)
+        )
+
+        # Campo Mensagem (Menu desativado)
         self.msg_input = MDTextField(
-            hint_text="Mensagem",
-            mode="fill",
+            hint_text="Mensagem para processar",
+            mode="rectangle",
             multiline=True,
             input_type='text',
-            fill_color_normal=(0.1, 0.1, 0.13, 1),
-            cursor_color=(0.1, 0.5, 0.9, 1),
-            selection_color=(0.1, 0.5, 0.9, 0.3),
-            # Desativa o menu feio padrão se preferir usar só o botão
-            use_bubble=True 
+            use_bubble=False,  # REMOVE O MENU FEIO
+            use_handles=False, # REMOVE AS BOLINHAS DE SELEÇÃO
+            fill_color_normal=(0.08, 0.08, 0.1, 1),
         )
-        layout.add_widget(self.msg_input)
+        content_card.add_widget(self.msg_input)
 
-        # Container Senha
-        pwd_container = MDRelativeLayout(size_hint_y=None, height=dp(60))
+        # Container Senha com Revelar e Gerar
+        pwd_box = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(60))
+        
         self.pwd_input = MDTextField(
             hint_text="Chave Secreta",
             password=True,
-            mode="fill",
-            fill_color_normal=(0.1, 0.1, 0.13, 1),
-            cursor_color=(0.1, 0.5, 0.9, 1)
+            mode="rectangle",
+            use_bubble=False,
+            fill_color_normal=(0.08, 0.08, 0.1, 1),
         )
+        
+        # Botão Olhinho
         self.eye_btn = MDIconButton(
-            icon="eye-off", pos_hint={"center_y": .5, "right": 1},
-            on_release=self.toggle_visibility
+            icon="eye-off",
+            on_release=self.toggle_visibility,
+            pos_hint={"center_y": .5}
         )
-        pwd_container.add_widget(self.pwd_input)
-        pwd_container.add_widget(self.eye_btn)
-        layout.add_widget(pwd_container)
+        
+        pwd_box.add_widget(self.pwd_input)
+        pwd_box.add_widget(self.eye_btn)
+        content_card.add_widget(pwd_box)
 
-        # Botões Principais
-        btns = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
-        btns.add_widget(MDRaisedButton(
-            text="PROTEGER", md_bg_color=(0.1, 0.5, 0.9, 1),
-            size_hint_x=0.5, on_release=self.encrypt
+        # Botões de Ação de Alto Impacto
+        actions = MDBoxLayout(spacing=dp(15), size_hint_y=None, height=dp(55))
+        actions.add_widget(MDFillRoundFlatButton(
+            text="🔒 PROTEGER", md_bg_color=(0.1, 0.4, 0.9, 1),
+            size_hint_x=0.5, font_size=dp(16), on_release=self.encrypt
         ))
-        btns.add_widget(MDRaisedButton(
-            text="REVELAR", md_bg_color=(0.2, 0.2, 0.25, 1),
-            size_hint_x=0.5, on_release=self.decrypt
+        actions.add_widget(MDFillRoundFlatButton(
+            text="🔓 REVELAR", md_bg_color=(0.2, 0.2, 0.25, 1),
+            size_hint_x=0.5, font_size=dp(16), on_release=self.decrypt
         ))
-        layout.add_widget(btns)
+        content_card.add_widget(actions)
 
-        # Resultado
+        # Área de Resultado em um Mini Card
+        res_card = MDCard(
+            radius=[15,], md_bg_color=(0.08, 0.08, 0.1, 1), 
+            padding=dp(10), size_hint_y=None, height=dp(80)
+        )
         scroll = ScrollView()
         self.result_label = MDLabel(
-            text="Aguardando...", halign="center", theme_text_color="Secondary",
-            font_style="Body2", size_hint_y=None
+            text="Aguardando...", halign="center", 
+            theme_text_color="Secondary", font_style="Caption"
         )
-        self.result_label.bind(texture_size=self.result_label.setter('size'))
         scroll.add_widget(self.result_label)
-        layout.add_widget(scroll)
+        res_card.add_widget(scroll)
+        content_card.add_widget(res_card)
 
-        # Toolbar Atualizada com Botão de COLAR
-        toolbar = MDBoxLayout(spacing=dp(10), adaptive_size=True, pos_hint={"center_x": .5})
-        toolbar.add_widget(MDIconButton(icon="content-paste", on_release=self.paste_text)) # NOVO BOTÃO
-        toolbar.add_widget(MDIconButton(icon="content-copy", on_release=self.copy_text))
-        toolbar.add_widget(MDIconButton(icon="share-variant", on_release=self.share_text))
-        toolbar.add_widget(MDIconButton(icon="key-plus", on_release=self.generate_pwd))
-        toolbar.add_widget(MDIconButton(icon="delete-sweep", on_release=self.clear_fields))
-        layout.add_widget(toolbar)
+        main_layout.add_widget(content_card)
 
-        self.add_widget(layout)
+        # TOOLBAR INFERIOR (Floating Style)
+        toolbar = MDCard(
+            radius=[25,], md_bg_color=(0.15, 0.15, 0.2, 1),
+            adaptive_size=True, padding=[dp(20), dp(5)],
+            pos_hint={"center_x": .5}, elevation=4
+        )
+        
+        # Botões da Barra
+        icons = [
+            ("content-paste", self.paste_text),
+            ("content-copy", self.copy_text),
+            ("share-variant", self.share_text),
+            ("key-plus", self.generate_pwd),
+            ("delete-sweep", self.clear_fields)
+        ]
+
+        for icon, func in icons:
+            toolbar.add_widget(MDIconButton(icon=icon, on_release=func, theme_text_color="Custom", icon_color=(1,1,1,1)))
+
+        main_layout.add_widget(toolbar)
+        self.add_widget(main_layout)
 
     def toggle_visibility(self, *args):
         self.pwd_input.password = not self.pwd_input.password
         self.eye_btn.icon = "eye" if not self.pwd_input.password else "eye-off"
 
     def paste_text(self, *args):
-        # Pega o texto da área de transferência e coloca no input
         self.msg_input.text = Clipboard.paste()
 
     def encrypt(self, *args):
@@ -158,8 +192,7 @@ class CryptoScreen(MDScreen):
         if self.last_result: Clipboard.copy(self.last_result)
 
     def generate_pwd(self, *args):
-        new_pwd = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
-        self.pwd_input.text = new_pwd
+        self.pwd_input.text = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
 
     def clear_fields(self, *args):
         self.msg_input.text = ""; self.pwd_input.text = ""; self.result_label.text = "Aguardando..."
