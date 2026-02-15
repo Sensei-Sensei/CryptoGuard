@@ -37,23 +37,23 @@ jobs:
           export PATH=$PATH:$HOME/.local/bin
           export BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE=1
           
-          # Forçamos o Buildozer a iniciar a estrutura de pastas
-          buildozer android p4a -- help || true
-          
-          # Corrigindo o local do sdkmanager que o Buildozer procura
+          # 1. Prepara as pastas do SDK antes do Buildozer reclamar
           ANDROID_SDK_HOME="$HOME/.buildozer/android/platform/android-sdk"
-          mkdir -p "$ANDROID_SDK_HOME"
+          mkdir -p "$ANDROID_SDK_HOME/cmdline-tools/latest"
+          mkdir -p "$ANDROID_SDK_HOME/tools/bin"
           
-          # Baixa as cmdline-tools oficiais
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          # 2. Baixa e extrai as ferramentas
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-9477386_latest.zip
           
-          # O segredo: O Buildozer antigo procura em 'tools', o novo em 'cmdline-tools'
-          # Criamos ambos para não ter erro
-          mkdir -p "$ANDROID_SDK_HOME/tools/bin"
-          cp -r cmdline-tools/* "$ANDROID_SDK_HOME/"
+          # 3. Garante permissão total de escrita nas pastas criadas
+          chmod -R 777 "$HOME/.buildozer"
+          
+          # 4. Move os arquivos para os dois locais possíveis (compatibilidade total)
+          cp -r cmdline-tools/* "$ANDROID_SDK_HOME/cmdline-tools/latest/"
           cp -r cmdline-tools/bin/* "$ANDROID_SDK_HOME/tools/bin/"
           
+          # 5. Roda o Buildozer
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
