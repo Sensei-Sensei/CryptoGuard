@@ -11,11 +11,12 @@ jobs:
       - name: Checkout do Código
         uses: actions/checkout@v4
 
-      - name: Limpeza Extrema de Espaço
+      - name: Liberar Espaço e Memória
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-          docker image prune -a -f
+          sudo rm -rf /usr/share/dotnet /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+          # Removendo versões extras do Android para evitar confusão de caminhos
+          sudo rm -rf /usr/local/lib/android/sdk/ndks
+          sudo rm -rf /usr/local/lib/android/sdk/extras
 
       - name: Configurar Java 17
         uses: actions/setup-java@v4
@@ -34,18 +35,29 @@ jobs:
             libreadline-dev libbz2-dev tk-dev
 
       - name: Instalar Buildozer
-        run: pip3 install --user --upgrade "cython<3.0" wheel "setuptools<70.0.0" buildozer
+        run: pip3 install --user --upgrade pip "cython<3.0" "setuptools<70.0.0" buildozer
 
-      - name: Compilar APK (Modo de Segurança)
+      - name: Compilar APK
         run: |
           export PATH=$PATH:$HOME/.local/bin
           export ANDROID_HOME=$ANDROID_SDK_ROOT
           
-          # Aceitar licenças
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
+          # BUSCA DINÂMICA PELO SDKMANAGER
+          # Isso evita o erro "No such file or directory"
+          SDK_MANAGER_PATH=$(find $ANDROID_HOME -name "sdkmanager" | grep "bin/sdkmanager" | head -n 1)
+          echo "Localizado sdkmanager em: $SDK_MANAGER_PATH"
           
-          # BUILD COM LIMITAÇÃO DE TRABALHO (Evita o Killed)
-          # Isso impede que o Buildozer use muita RAM de uma vez
+          # Aceitar licenças
+          yes | $SDK_MANAGER_PATH --sdk_root=$ANDROID_HOME --licenses
+          
+          # Rodar Buildozer
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
+          BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE: 1
+
+      - name: Upload do APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptoGuard-APK
+          path: bin/*.apk
