@@ -4,9 +4,8 @@ import secrets
 import threading
 from kivy.config import Config
 
-# Configurações iniciais
+# Configurações de teclado (essencial para não bugar no Android)
 Config.set('kivy', 'keyboard_mode', 'system')
-Config.set('graphics', 'resizable', '0')
 
 from kivymd.app import MDApp
 from kivymd.uix.screen import MDScreen
@@ -19,7 +18,6 @@ from kivymd.uix.snackbar import Snackbar
 from kivy.metrics import dp
 from kivy.core.clipboard import Clipboard
 from kivy.utils import mainthread
-from kivy.core.window import Window
 
 class CryptoScreen(MDScreen):
     def __init__(self, **kwargs):
@@ -35,7 +33,7 @@ class CryptoScreen(MDScreen):
 
         self.card = MDCard(
             orientation='vertical', padding=dp(15), spacing=dp(15),
-            elevation=0, radius=[20,], md_bg_color=(1, 1, 1, 0.05),
+            elevation=0, radius=[dp(20),], md_bg_color=(1, 1, 1, 0.05),
             size_hint_y=None, height=dp(420), line_color=(1, 1, 1, 0.1)
         )
 
@@ -112,7 +110,8 @@ class CryptoScreen(MDScreen):
 
 class CryptoGuardApp(MDApp):
     def build(self):
-        self.theme_cls.theme_style, self.theme_cls.primary_palette = "Dark", "Blue"
+        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.primary_palette = "Blue"
         return CryptoScreen()
 
 if __name__ == '__main__':
