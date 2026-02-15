@@ -11,11 +11,14 @@ jobs:
       - name: Checkout Código
         uses: actions/checkout@v4
 
-      - name: Liberar Espaço e Limpar Caches
+      - name: Limpeza Extrema (Prevenir Erros de Sintaxe no Gradle)
         run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-          rm -rf ~/.gradle
+          # Remove caches que podem conter o build.gradle corrompido
+          rm -rf .buildozer
           rm -rf ~/.buildozer
+          rm -rf ~/.gradle
+          # Libera espaço em disco removendo ferramentas desnecessárias
+          sudo rm -rf /usr/share/dotnet /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
 
       - name: Configurar Java 17
         uses: actions/setup-java@v4
@@ -31,18 +34,29 @@ jobs:
             zlib1g-dev pkg-config libffi-dev libssl-dev autoconf automake \
             libtool unzip zip libsqlite3-dev
 
-      - name: Instalar Buildozer
-        run: pip3 install --user --upgrade pip "cython<3.0" "setuptools<70.0.0" buildozer
+      - name: Instalar Buildozer e Cython
+        run: |
+          pip3 install --user --upgrade pip
+          pip3 install --user "cython<3.0" "setuptools<70.0.0" buildozer
 
-      - name: Compilar APK
+      - name: Compilar APK com Buildozer
         run: |
           export PATH=$PATH:$HOME/.local/bin
           export ANDROID_HOME=$ANDROID_SDK_ROOT
           
-          # Localiza o sdkmanager dinamicamente no Runner
+          # Localiza o caminho real do sdkmanager para aceitar licenças
           SDK_PATH=$(find $ANDROID_HOME -name "sdkmanager" | grep "bin/sdkmanager" | head -n 1)
+          echo "SDK Manager encontrado em: $SDK_PATH"
           yes | $SDK_PATH --sdk_root=$ANDROID_HOME --licenses
           
+          # Executa o build em modo debug com log detalhado
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
+          BUILDOZER_ACCEPT_ANDROID_SDK_LICENSE: 1
+
+      - name: Upload do APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptoGuard-Release
+          path: bin/*.apk
