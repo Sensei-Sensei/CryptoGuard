@@ -4,10 +4,10 @@ package.name = cryptoguard
 package.domain = com.stazin
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 1.1
+version = 1.2
 
-# REQUISITOS (O Pillow é necessário para os ícones do KivyMD)
-requirements = python3, kivy==2.3.0, kivymd==1.2.0, pyjnius, pillow, setuptools
+# ESSENCIAL: Adicionei 'sdl2_ttf' e 'sdl2_image' para garantir que os ícones carreguem
+requirements = python3, kivy==2.3.0, kivymd==1.2.0, pyjnius, pillow, setuptools, hostpython3, sdl2_ttf, sdl2_image
 
 orientation = portrait
 fullscreen = 0
@@ -25,5 +25,4 @@ warn_on_root = 1
 
 [android]
 android.entrypoint = org.kivy.android.PythonActivity
-# Permite que o teclado interaja melhor com o layout
 android.window_softinput_mode = adjustResize
