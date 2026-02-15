@@ -34,19 +34,14 @@ jobs:
 
       - name: Compilar APK com Buildozer
         run: |
-          export PATH=$PATH:$HOME/.local/bin
-          
-          # FORÇAR O USO DO SDK PRÉ-INSTALADO DO GITHUB (Evita o erro ClassNotFound)
+          # 1. Configurar os caminhos do SDK/NDK e PATH
           export ANDROID_HOME=$ANDROID_SDK_ROOT
-          export ANDROID_SDK_ROOT=$ANDROID_HOME
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$HOME/.local/bin
           
-          # Corrigir erro de módulos do Java para o SDK Manager
-          export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee' || export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions'
+          # 2. Aceitar licenças usando o caminho completo para evitar o erro 'not found'
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
           
-          # Aceitar licenças no SDK oficial do sistema
-          yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
-          
-          # Iniciar build
+          # 3. Executar o Buildozer
           buildozer -v android debug
         env:
           BUILDOZER_WARN_ON_ROOT: 0
