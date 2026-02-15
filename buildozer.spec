@@ -15,7 +15,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 
 # (str) Application version (Aumentado para garantir nova instalação)
-version = 2.0
+version = 2.1
 
 # (list) Application requirements
 # Adicionado sdl2_image e sdl2_ttf explicitamente
