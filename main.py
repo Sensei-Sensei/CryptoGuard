@@ -4,7 +4,7 @@ import secrets
 import threading
 from kivy.config import Config
 
-# Configurações de teclado (essencial para não bugar no Android)
+# Configurações de teclado (essencial para Android)
 Config.set('kivy', 'keyboard_mode', 'system')
 
 from kivymd.app import MDApp
@@ -22,7 +22,6 @@ from kivy.utils import mainthread
 class CryptoScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        
         layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(40), dp(20), dp(20)], spacing=dp(15))
         
         layout.add_widget(MDLabel(
@@ -48,7 +47,7 @@ class CryptoScreen(MDScreen):
         btns.add_widget(MDFillRoundFlatIconButton(icon="lock-open", text="REVELAR", on_release=self.start_decrypt, size_hint_x=0.5))
         
         self.card.add_widget(btns)
-        self.res_label = MDLabel(text="Pronto para uso", halign="center", theme_text_color="Secondary", font_style="Caption")
+        self.res_label = MDLabel(text="Pronto", halign="center", theme_text_color="Secondary", font_style="Caption")
         self.card.add_widget(self.res_label)
 
         layout.add_widget(self.card)
@@ -65,7 +64,6 @@ class CryptoScreen(MDScreen):
         Snackbar(text=info, bg_color=((0.8, 0.2, 0.2, 1) if is_error else (0, 0.6, 0.4, 1))).open()
 
     def start_encrypt(self, *args):
-        self.res_label.text = "Criptografando..."
         threading.Thread(target=self._encrypt_task, daemon=True).start()
 
     def _encrypt_task(self):
@@ -85,10 +83,10 @@ class CryptoScreen(MDScreen):
             auth_tag = hashlib.sha256(key + enc).digest()[:16]
             final = base64.b64encode(salt + auth_tag + enc).decode()
             self.update_ui(final, "Criptografado e Copiado!")
-        except Exception as e: self.update_ui("", f"Erro: {str(e)}", True)
+        except Exception as e:
+            self.update_ui("", f"Erro: {str(e)}", True)
 
     def start_decrypt(self, *args):
-        self.res_label.text = "Revelando..."
         threading.Thread(target=self._decrypt_task, daemon=True).start()
 
     def _decrypt_task(self):
@@ -106,7 +104,8 @@ class CryptoScreen(MDScreen):
                 expanded += hashlib.sha256(key + i.to_bytes(4, 'big')).digest()
             res = bytes(a ^ b for a, b in zip(enc, expanded))[8:].decode('utf-8')
             self.update_ui(res, "Mensagem Revelada!")
-        except: self.update_ui("", "Código inválido", True)
+        except:
+            self.update_ui("", "Código inválido", True)
 
 class CryptoGuardApp(MDApp):
     def build(self):
