@@ -1,7 +1,7 @@
 [app]
 title = CryptoGuard
 package.name = cryptoguard
-package.domain = com.cryptoguard
+package.domain = com.stazin
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 version = 1.9
