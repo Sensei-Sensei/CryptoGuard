@@ -15,7 +15,7 @@ from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
 from kivy.config import Config
 
-# Mantendo sua configuração original
+# Desativa menus de contexto e interações que causam conflito
 Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
@@ -35,30 +35,38 @@ class CryptoScreen(MDScreen):
             elevation=2, radius=[dp(20),], size_hint_y=None, height=dp(450)
         )
 
+        # CAMPO DE MENSAGEM: Ajustado para evitar o corretor
         self.msg_input = MDTextField(
             hint_text="Sua mensagem ou código",
-            mode="rectangle", multiline=True, size_hint_y=None, height=dp(100)
+            mode="rectangle", 
+            multiline=True, 
+            size_hint_y=None, 
+            height=dp(100),
+            spellcheck=False, # Desativa corretor ortográfico
+            input_type="mail" # Sugere ao Android não usar corretor (estilo e-mail)
         )
         
+        # CAMPO DE SENHA
         self.pwd_input = MDTextField(
             hint_text="Chave de Acesso",
-            mode="rectangle", password=True, size_hint_y=None, height=dp(50)
+            mode="rectangle", 
+            password=True, 
+            size_hint_y=None, 
+            height=dp(50),
+            spellcheck=False
         )
 
         content_card.add_widget(self.msg_input)
         content_card.add_widget(self.pwd_input)
 
-        # BOX DE BOTÕES ARREDONDADOS
         btn_box = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
         
-        # Botão Proteger com radius estilo pílula
         self.encrypt_btn = MDFillRoundFlatIconButton(
             icon="shield-lock", text="PROTEGER",
             radius=[dp(25), dp(25), dp(25), dp(25)],
             on_release=self.encrypt_text, size_hint_x=0.5
         )
         
-        # Botão Revelar com radius estilo pílula
         self.decrypt_btn = MDFillRoundFlatIconButton(
             icon="lock-open", text="REVELAR",
             radius=[dp(25), dp(25), dp(25), dp(25)],
