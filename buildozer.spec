@@ -1,10 +1,10 @@
 [app]
 title = CryptoGuard
 package.name = cryptoguard
-package.domain = com.cryptoguard
+package.domain = com.stazin
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 2.0
+version = 1.8
 
 requirements = python3, kivy==2.3.0, kivymd==1.2.0, pyjnius, pillow, setuptools, hostpython3, sdl2_ttf, sdl2_image
 
