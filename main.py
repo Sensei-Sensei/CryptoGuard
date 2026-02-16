@@ -2,22 +2,25 @@ import hashlib
 import base64
 import secrets
 import threading
-from kivy.config import Config
 
-# Configurações de teclado (essencial para Android)
-Config.set('kivy', 'keyboard_mode', 'system')
-
-from kivymd.app import MDApp
-from kivymd.uix.screen import MDScreen
-from kivymd.uix.button import MDFillRoundFlatIconButton
-from kivymd.uix.textfield import MDTextField
-from kivymd.uix.label import MDLabel
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.card import MDCard
-from kivymd.uix.snackbar import Snackbar
-from kivy.metrics import dp
-from kivy.core.clipboard import Clipboard
-from kivy.utils import mainthread
+# Tente configurar o Kivy antes de qualquer outra coisa
+try:
+    from kivy.config import Config
+    Config.set('kivy', 'keyboard_mode', 'system')
+    
+    from kivymd.app import MDApp
+    from kivymd.uix.screen import MDScreen
+    from kivymd.uix.button import MDFillRoundFlatIconButton
+    from kivymd.uix.textfield import MDTextField
+    from kivymd.uix.label import MDLabel
+    from kivymd.uix.boxlayout import MDBoxLayout
+    from kivymd.uix.card import MDCard
+    from kivymd.uix.snackbar import Snackbar
+    from kivy.metrics import dp
+    from kivy.core.clipboard import Clipboard
+    from kivy.utils import mainthread
+except ImportError as e:
+    print(f"Erro ao carregar módulos: {e}")
 
 class CryptoScreen(MDScreen):
     def __init__(self, **kwargs):
