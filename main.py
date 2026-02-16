@@ -15,7 +15,7 @@ from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
 from kivy.config import Config
 
-# Desativa menus de contexto antigos
+# Mantendo sua configuração original
 Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
@@ -25,13 +25,11 @@ class CryptoScreen(MDScreen):
         
         main_layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(50), dp(20), dp(20)], spacing=dp(20))
         
-        # Título
         main_layout.add_widget(MDLabel(
             text="CRYPTO GUARD", halign="center", font_style="H5",
             bold=True, theme_text_color="Primary", size_hint_y=None, height=dp(40)
         ))
 
-        # Card de Conteúdo
         content_card = MDCard(
             orientation='vertical', padding=dp(15), spacing=dp(15),
             elevation=2, radius=[dp(20),], size_hint_y=None, height=dp(450)
@@ -50,17 +48,17 @@ class CryptoScreen(MDScreen):
         content_card.add_widget(self.msg_input)
         content_card.add_widget(self.pwd_input)
 
-        # BOX DE BOTÕES (Arredondados)
+        # BOX DE BOTÕES ARREDONDADOS
         btn_box = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
         
-        # Botão Proteger (Bordas arredondadas raio 25)
+        # Botão Proteger com radius estilo pílula
         self.encrypt_btn = MDFillRoundFlatIconButton(
             icon="shield-lock", text="PROTEGER",
             radius=[dp(25), dp(25), dp(25), dp(25)],
             on_release=self.encrypt_text, size_hint_x=0.5
         )
         
-        # Botão Revelar (Bordas arredondadas raio 25)
+        # Botão Revelar com radius estilo pílula
         self.decrypt_btn = MDFillRoundFlatIconButton(
             icon="lock-open", text="REVELAR",
             radius=[dp(25), dp(25), dp(25), dp(25)],
@@ -71,14 +69,12 @@ class CryptoScreen(MDScreen):
         btn_box.add_widget(self.decrypt_btn)
         content_card.add_widget(btn_box)
 
-        # Resultado
         self.result_label = MDLabel(
             text="Aguardando...", halign="center",
             theme_text_color="Secondary", font_style="Caption"
         )
         content_card.add_widget(self.result_label)
 
-        # Ações Extras
         extra_box = MDBoxLayout(spacing=dp(20), adaptive_size=True, pos_hint={"center_x": .5})
         extra_box.add_widget(MDIconButton(icon="content-copy", on_release=self.copy_text))
         extra_box.add_widget(MDIconButton(icon="share-variant", on_release=self.share_text))
@@ -86,7 +82,7 @@ class CryptoScreen(MDScreen):
         
         content_card.add_widget(extra_box)
         main_layout.add_widget(content_card)
-        main_layout.add_widget(MDBoxLayout()) # Espaçador
+        main_layout.add_widget(MDBoxLayout()) 
         self.add_widget(main_layout)
 
     def encrypt_text(self, *args):
