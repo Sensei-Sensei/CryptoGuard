@@ -1,114 +1,156 @@
 import hashlib
 import base64
 import secrets
-import threading
+import string
+from kivymd.app import MDApp
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.button import MDIconButton, MDFillRoundFlatIconButton
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.label import MDLabel
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.card import MDCard
+from kivy.uix.scrollview import ScrollView
+from kivy.metrics import dp
+from kivy.core.clipboard import Clipboard
+from kivy.utils import platform
+from kivy.config import Config
 
-# Tente configurar o Kivy antes de qualquer outra coisa
-try:
-    from kivy.config import Config
-    Config.set('kivy', 'keyboard_mode', 'system')
-    
-    from kivymd.app import MDApp
-    from kivymd.uix.screen import MDScreen
-    from kivymd.uix.button import MDFillRoundFlatIconButton
-    from kivymd.uix.textfield import MDTextField
-    from kivymd.uix.label import MDLabel
-    from kivymd.uix.boxlayout import MDBoxLayout
-    from kivymd.uix.card import MDCard
-    from kivymd.uix.snackbar import Snackbar
-    from kivy.metrics import dp
-    from kivy.core.clipboard import Clipboard
-    from kivy.utils import mainthread
-except ImportError as e:
-    print(f"Erro ao carregar módulos: {e}")
+# Desativa menus de contexto antigos
+Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(40), dp(20), dp(20)], spacing=dp(15))
+        self.last_result = ""
         
-        layout.add_widget(MDLabel(
+        main_layout = MDBoxLayout(orientation='vertical', padding=[dp(20), dp(50), dp(20), dp(20)], spacing=dp(20))
+        
+        # Título
+        main_layout.add_widget(MDLabel(
             text="CRYPTO GUARD", halign="center", font_style="H5",
-            bold=True, theme_text_color="Custom", text_color=(0, 0.8, 1, 1),
-            size_hint_y=None, height=dp(50)
+            bold=True, theme_text_color="Primary", size_hint_y=None, height=dp(40)
         ))
 
-        self.card = MDCard(
+        # Card de Conteúdo
+        content_card = MDCard(
             orientation='vertical', padding=dp(15), spacing=dp(15),
-            elevation=0, radius=[dp(20),], md_bg_color=(1, 1, 1, 0.05),
-            size_hint_y=None, height=dp(420), line_color=(1, 1, 1, 0.1)
+            elevation=2, radius=[dp(20),], size_hint_y=None, height=dp(450)
         )
 
-        self.msg_input = MDTextField(hint_text="Mensagem ou Código", mode="rectangle", multiline=True)
-        self.pwd_input = MDTextField(hint_text="Chave de Acesso", password=True, mode="rectangle")
+        self.msg_input = MDTextField(
+            hint_text="Sua mensagem ou código",
+            mode="rectangle", multiline=True, size_hint_y=None, height=dp(100)
+        )
         
-        self.card.add_widget(self.msg_input)
-        self.card.add_widget(self.pwd_input)
+        self.pwd_input = MDTextField(
+            hint_text="Chave de Acesso",
+            mode="rectangle", password=True, size_hint_y=None, height=dp(50)
+        )
 
-        btns = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
-        btns.add_widget(MDFillRoundFlatIconButton(icon="shield-lock", text="PROTEGER", on_release=self.start_encrypt, size_hint_x=0.5))
-        btns.add_widget(MDFillRoundFlatIconButton(icon="lock-open", text="REVELAR", on_release=self.start_decrypt, size_hint_x=0.5))
+        content_card.add_widget(self.msg_input)
+        content_card.add_widget(self.pwd_input)
+
+        # BOX DE BOTÕES (Arredondados)
+        btn_box = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
         
-        self.card.add_widget(btns)
-        self.res_label = MDLabel(text="Pronto", halign="center", theme_text_color="Secondary", font_style="Caption")
-        self.card.add_widget(self.res_label)
+        # Botão Proteger (Bordas arredondadas raio 25)
+        self.encrypt_btn = MDFillRoundFlatIconButton(
+            icon="shield-lock", text="PROTEGER",
+            radius=[dp(25), dp(25), dp(25), dp(25)],
+            on_release=self.encrypt_text, size_hint_x=0.5
+        )
+        
+        # Botão Revelar (Bordas arredondadas raio 25)
+        self.decrypt_btn = MDFillRoundFlatIconButton(
+            icon="lock-open", text="REVELAR",
+            radius=[dp(25), dp(25), dp(25), dp(25)],
+            on_release=self.decrypt_text, size_hint_x=0.5
+        )
 
-        layout.add_widget(self.card)
-        layout.add_widget(MDBoxLayout())
-        self.add_widget(layout)
+        btn_box.add_widget(self.encrypt_btn)
+        btn_box.add_widget(self.decrypt_btn)
+        content_card.add_widget(btn_box)
 
-    @mainthread
-    def update_ui(self, result, info, is_error=False):
-        self.res_label.text = info
-        if not is_error and result:
-            Clipboard.copy(result)
-            if "Criptografado" in info: self.msg_input.text = ""
-            else: self.msg_input.text = result
-        Snackbar(text=info, bg_color=((0.8, 0.2, 0.2, 1) if is_error else (0, 0.6, 0.4, 1))).open()
+        # Resultado
+        self.result_label = MDLabel(
+            text="Aguardando...", halign="center",
+            theme_text_color="Secondary", font_style="Caption"
+        )
+        content_card.add_widget(self.result_label)
 
-    def start_encrypt(self, *args):
-        threading.Thread(target=self._encrypt_task, daemon=True).start()
+        # Ações Extras
+        extra_box = MDBoxLayout(spacing=dp(20), adaptive_size=True, pos_hint={"center_x": .5})
+        extra_box.add_widget(MDIconButton(icon="content-copy", on_release=self.copy_text))
+        extra_box.add_widget(MDIconButton(icon="share-variant", on_release=self.share_text))
+        extra_box.add_widget(MDIconButton(icon="delete-outline", on_release=self.clear_fields))
+        
+        content_card.add_widget(extra_box)
+        main_layout.add_widget(content_card)
+        main_layout.add_widget(MDBoxLayout()) # Espaçador
+        self.add_widget(main_layout)
 
-    def _encrypt_task(self):
-        msg, pwd = self.msg_input.text.strip(), self.pwd_input.text.strip()
-        if not msg or not pwd:
-            self.update_ui("", "Preencha tudo!", True)
-            return
+    def encrypt_text(self, *args):
+        msg = self.msg_input.text.strip(); pwd = self.pwd_input.text.strip()
+        if not msg or not pwd: return
         try:
             salt = secrets.token_bytes(16)
             key = hashlib.pbkdf2_hmac('sha256', pwd.encode(), salt, 100000)
             nonce = secrets.token_bytes(8)
             data = nonce + msg.encode('utf-8')
             expanded = b''
-            for i in range((len(data) // 32) + 1):
-                expanded += hashlib.sha256(key + i.to_bytes(4, 'big')).digest()
-            enc = bytes(a ^ b for a, b in zip(data, expanded))
+            counter = 0
+            while len(expanded) < len(data):
+                expanded += hashlib.sha256(key + counter.to_bytes(4, 'big')).digest()
+                counter += 1
+            enc = bytes(a ^ b for a, b in zip(data, expanded[:len(data)]))
             auth_tag = hashlib.sha256(key + enc).digest()[:16]
             final = base64.b64encode(salt + auth_tag + enc).decode()
-            self.update_ui(final, "Criptografado e Copiado!")
-        except Exception as e:
-            self.update_ui("", f"Erro: {str(e)}", True)
+            self.result_label.text = "Criptografado!"
+            self.last_result = final
+            self.msg_input.text = ""
+        except: self.result_label.text = "Erro!"
 
-    def start_decrypt(self, *args):
-        threading.Thread(target=self._decrypt_task, daemon=True).start()
-
-    def _decrypt_task(self):
-        code, pwd = self.msg_input.text.strip(), self.pwd_input.text.strip()
+    def decrypt_text(self, *args):
+        code = self.msg_input.text.strip(); pwd = self.pwd_input.text.strip()
         if not code or not pwd: return
         try:
             raw = base64.b64decode(code)
             salt, auth_tag, enc = raw[:16], raw[16:32], raw[32:]
             key = hashlib.pbkdf2_hmac('sha256', pwd.encode(), salt, 100000)
             if hashlib.sha256(key + enc).digest()[:16] != auth_tag:
-                self.update_ui("", "Chave incorreta!", True)
+                self.result_label.text = "Chave Errada!"
                 return
             expanded = b''
-            for i in range((len(enc) // 32) + 1):
-                expanded += hashlib.sha256(key + i.to_bytes(4, 'big')).digest()
-            res = bytes(a ^ b for a, b in zip(enc, expanded))[8:].decode('utf-8')
-            self.update_ui(res, "Mensagem Revelada!")
-        except:
-            self.update_ui("", "Código inválido", True)
+            counter = 0
+            while len(expanded) < len(enc):
+                expanded += hashlib.sha256(key + counter.to_bytes(4, 'big')).digest()
+                counter += 1
+            res = bytes(a ^ b for a, b in zip(enc, expanded[:len(enc)]))[8:].decode('utf-8')
+            self.result_label.text = "Revelado!"
+            self.last_result = res
+            self.msg_input.text = res
+        except: self.result_label.text = "Código Inválido!"
+
+    def share_text(self, *args):
+        if not self.last_result: return
+        if platform == 'android':
+            from jnius import autoclass
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            Intent = autoclass('android.content.Intent')
+            String = autoclass('java.lang.String')
+            intent = Intent(Intent.ACTION_SEND)
+            intent.setType("text/plain")
+            intent.putExtra(Intent.EXTRA_TEXT, String(self.last_result))
+            PythonActivity.mActivity.startActivity(Intent.createChooser(intent, String("Enviar:")))
+        else: Clipboard.copy(self.last_result)
+
+    def copy_text(self, *args):
+        if self.last_result: 
+            Clipboard.copy(self.last_result)
+            self.result_label.text = "Copiado!"
+
+    def clear_fields(self, *args):
+        self.msg_input.text = ""; self.pwd_input.text = ""; self.result_label.text = "Aguardando..."
 
 class CryptoGuardApp(MDApp):
     def build(self):
