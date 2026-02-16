@@ -28,12 +28,6 @@ jobs:
             libtool unzip zip libsqlite3-dev libgdbm-dev libncursesw5-dev \
             libreadline-dev libbz2-dev tk-dev
 
-      - name: Cache do Buildozer
-        uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-
       - name: Instalar Buildozer e Cython
         run: |
           pip3 install --user --upgrade pip
