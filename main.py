@@ -15,7 +15,7 @@ from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
 from kivy.config import Config
 
-# Desativa menus de contexto e interações que causam conflito
+# Desativa interações de sistema que podem causar fecho inesperado
 Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
@@ -35,24 +35,18 @@ class CryptoScreen(MDScreen):
             elevation=2, radius=[dp(20),], size_hint_y=None, height=dp(450)
         )
 
-        # CAMPO DE MENSAGEM: Ajustado para evitar o corretor
+        # MENSAGEM: spellcheck=False impede o teclado de embaralhar o texto
         self.msg_input = MDTextField(
             hint_text="Sua mensagem ou código",
-            mode="rectangle", 
-            multiline=True, 
-            size_hint_y=None, 
-            height=dp(100),
-            spellcheck=False, # Desativa corretor ortográfico
-            input_type="mail" # Sugere ao Android não usar corretor (estilo e-mail)
+            mode="rectangle", multiline=True, size_hint_y=None, height=dp(100),
+            spellcheck=False,
+            input_type='mail' # Ajuda a desativar predições de texto bugadas
         )
         
-        # CAMPO DE SENHA
+        # CHAVE: password=True já ajuda, mas adicionamos spellcheck=False por segurança
         self.pwd_input = MDTextField(
             hint_text="Chave de Acesso",
-            mode="rectangle", 
-            password=True, 
-            size_hint_y=None, 
-            height=dp(50),
+            mode="rectangle", password=True, size_hint_y=None, height=dp(50),
             spellcheck=False
         )
 
