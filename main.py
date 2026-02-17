@@ -15,7 +15,7 @@ from kivy.core.clipboard import Clipboard
 from kivy.utils import platform
 from kivy.config import Config
 
-# Desativa interações de sistema que podem causar fecho inesperado
+# Desativa seleções automáticas que podem causar crash em campos multiline
 Config.set('kivy', 'textinput_selectable', '0')
 
 class CryptoScreen(MDScreen):
@@ -35,18 +35,23 @@ class CryptoScreen(MDScreen):
             elevation=2, radius=[dp(20),], size_hint_y=None, height=dp(450)
         )
 
-        # MENSAGEM: spellcheck=False impede o teclado de embaralhar o texto
+        # CORREÇÃO DO TECLADO: spellcheck=False e input_type='mail' evitam o erro de texto embaralhado
         self.msg_input = MDTextField(
             hint_text="Sua mensagem ou código",
-            mode="rectangle", multiline=True, size_hint_y=None, height=dp(100),
-            spellcheck=False,
-            input_type='mail' # Ajuda a desativar predições de texto bugadas
+            mode="rectangle", 
+            multiline=True, 
+            size_hint_y=None, 
+            height=dp(100),
+            spellcheck=False, # Desativa o corretor ortográfico
+            input_type='mail'  # Sugere ao teclado não usar predição agressiva
         )
         
-        # CHAVE: password=True já ajuda, mas adicionamos spellcheck=False por segurança
         self.pwd_input = MDTextField(
             hint_text="Chave de Acesso",
-            mode="rectangle", password=True, size_hint_y=None, height=dp(50),
+            mode="rectangle", 
+            password=True, 
+            size_hint_y=None, 
+            height=dp(50),
             spellcheck=False
         )
 
@@ -55,6 +60,7 @@ class CryptoScreen(MDScreen):
 
         btn_box = MDBoxLayout(spacing=dp(10), size_hint_y=None, height=dp(50))
         
+        # Botões arredondados (conforme seu modelo original)
         self.encrypt_btn = MDFillRoundFlatIconButton(
             icon="shield-lock", text="PROTEGER",
             radius=[dp(25), dp(25), dp(25), dp(25)],
